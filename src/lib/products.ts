@@ -334,37 +334,32 @@ export const PRODUCTS: Product[] = [
  * swapping the underlying storage for a real database later only means
  * changing this function's implementation, not any page code.
  */
-function getMergedCatalog(): Product[] {
-  const overrides = getOverrides();
+async function getMergedCatalog(): Promise<Product[]> {
+  const [overrides, custom] = await Promise.all([getOverrides(), getCustomProducts()]);
   const base = PRODUCTS.map((p) => ({ ...p, ...overrides[p.id] }));
-  const custom = getCustomProducts();
   return [...base, ...custom].filter((p) => !p.hidden);
 }
 
-export function getAllProducts(): Product[] {
+export async function getAllProducts(): Promise<Product[]> {
   return getMergedCatalog();
 }
 
-export function getProductBySlug(slug: string): Product | undefined {
-  return getMergedCatalog().find((p) => p.slug === slug);
+export async function getProductBySlug(slug: string): Promise<Product | undefined> {
+  return (await getMergedCatalog()).find((p) => p.slug === slug);
 }
 
-export function getProductById(id: string): Product | undefined {
-  return getMergedCatalog().find((p) => p.id === id);
+export async function getProductById(id: string): Promise<Product | undefined> {
+  return (await getMergedCatalog()).find((p) => p.id === id);
 }
 
-export function getProductsByCategory(category: ProductCategory): Product[] {
-  return getMergedCatalog().filter((p) => p.category === category);
+export async function getProductsByCategory(category: ProductCategory): Promise<Product[]> {
+  return (await getMergedCatalog()).filter((p) => p.category === category);
 }
 
-export function getBestsellers(limit = 4): Product[] {
-  return getMergedCatalog()
-    .filter((p) => p.bestseller)
-    .slice(0, limit);
+export async function getBestsellers(limit = 4): Promise<Product[]> {
+  return (await getMergedCatalog()).filter((p) => p.bestseller).slice(0, limit);
 }
 
-export function getNewArrivals(limit = 4): Product[] {
-  return getMergedCatalog()
-    .filter((p) => p.newArrival)
-    .slice(0, limit);
+export async function getNewArrivals(limit = 4): Promise<Product[]> {
+  return (await getMergedCatalog()).filter((p) => p.newArrival).slice(0, limit);
 }

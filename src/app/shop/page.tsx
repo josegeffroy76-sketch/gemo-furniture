@@ -23,7 +23,7 @@ export default async function ShopPage({
   const { category } = await searchParams;
   const activeCategory = isValidCategory(category) ? category : undefined;
 
-  const products = getAllProducts().filter((p) =>
+  const products = (await getAllProducts()).filter((p) =>
     activeCategory ? p.category === activeCategory : true
   );
 

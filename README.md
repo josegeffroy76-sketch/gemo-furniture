@@ -9,8 +9,9 @@ furniture for apartments, dorms, and first homes, shipped across the USA.
 - **Zustand** for cart state (persisted to the browser)
 - **Stripe Checkout** for payment
 - **Shippo** for live USPS/UPS/FedEx shipping rate quotes
-- A lightweight JSON-file "database" for admin edits and the order log (see
-  **Moving to a real database** below before launch)
+- **Redis (via Vercel Marketplace, e.g. Upstash)** for admin edits and the
+  order log — required in production (see **Persisting admin data** below);
+  falls back to local JSON files under `/data` with zero setup for local dev
 
 ## Getting started
 
@@ -34,6 +35,7 @@ don't need any API keys just to click around locally.
 | Order log in `/admin/orders` | Empty until the webhook is configured | `STRIPE_WEBHOOK_SECRET` |
 | Admin panel (`/admin`) | Locked out | `ADMIN_PASSWORD` |
 | Product photo uploads in `/admin/products` | Shows a friendly "not set up yet" message | `BLOB_READ_WRITE_TOKEN` (Vercel Blob) |
+| Admin edits & orders persisting in production | **Fails in production without it** — local dev works via a JSON-file fallback | `KV_REST_API_URL` / `KV_REST_API_TOKEN` (Vercel Redis/KV) |
 
 See `.env.example` for every variable and where to get each key.
 
@@ -113,29 +115,47 @@ package dimensions to the catalog and use those instead once you have them.
   event, and set `STRIPE_WEBHOOK_SECRET` to the signing secret it gives you.
   For local testing, use the Stripe CLI: `stripe listen --forward-to localhost:3000/api/webhooks/stripe`.
 
-## Moving to a real database
+## Persisting admin data (Redis)
 
-The JSON files under `/data` (`product-overrides.json`, `custom-products.json`,
-`orders.json`) are a zero-config way to make the admin panel and order log
-actually work today. **They will not persist in production on serverless
-hosts like Vercel** — the filesystem there is read-only/ephemeral at runtime.
+**This is required before taking real orders.** Vercel's application
+filesystem is read-only at runtime, so without a real store connected, every
+admin edit (price/stock changes, new products, photos) and every order
+logged by the Stripe webhook fails instantly in production.
 
-Before taking real orders in production, replace `src/lib/json-file-store.ts`'s
-read/write calls with a real database — e.g. Postgres via
-[Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres),
+`src/lib/json-file-store.ts` handles this automatically: if Redis
+credentials are present, reads and writes go to Redis; otherwise it falls
+back to local JSON files under `/data` (fine for local development, not for
+production).
+
+To connect Redis:
+
+1. In the Vercel dashboard, go to your project's **Storage** tab → **Create
+   Database** → pick a Redis/KV provider (e.g. [Upstash](https://vercel.com/marketplace/upstash/upstash-kv)).
+2. Choose the **Free** plan (plenty for this app's usage) and connect it to
+   this project for the **Production** and **Preview** environments. Leave
+   the custom prefix blank.
+3. Redeploy. Vercel injects the URL/token pair automatically — the exact
+   variable names vary by provider (`KV_REST_API_URL` / `KV_REST_API_TOKEN`,
+   or `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`); the store
+   checks the common variants, so no code changes should be needed.
+
+If you'd rather use a relational database instead of Redis (e.g. for more
+complex reporting later), replace `src/lib/json-file-store.ts`'s read/write
+calls with Postgres via [Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres),
 [Neon](https://neon.tech), or [Supabase](https://supabase.com), using an ORM
 like [Prisma](https://www.prisma.io) or [Drizzle](https://orm.drizzle.team).
 `src/lib/catalog-store.ts` and `src/lib/orders-store.ts` are the only two
-files that talk to storage — swapping their internals is enough, no page or
-API route code needs to change.
+files that talk to storage — swapping the internals of
+`json-file-store.ts` is enough, no page or API route code needs to change.
 
 ## Deploying
 
 This app deploys cleanly to [Vercel](https://vercel.com/new) (the team behind
 Next.js): connect the repo, add the environment variables from `.env.example`
 in the Vercel project settings, and deploy. Remember to point the Stripe
-webhook at your live domain once it's up, and swap the JSON file store for a
-real database first (see above).
+webhook at your live domain once it's up, and connect Redis first (see
+**Persisting admin data** above) — without it, the admin panel and order log
+will fail in production.
 
 ## Project structure
 

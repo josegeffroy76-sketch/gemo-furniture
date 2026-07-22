@@ -7,33 +7,33 @@ type OverridesMap = Record<string, ProductOverride>;
 const OVERRIDES_FILE = "product-overrides.json";
 const CUSTOM_PRODUCTS_FILE = "custom-products.json";
 
-export function getOverrides(): OverridesMap {
+export async function getOverrides(): Promise<OverridesMap> {
   return readJsonFile<OverridesMap>(OVERRIDES_FILE, {});
 }
 
-export function setOverride(productId: string, patch: ProductOverride): void {
-  const overrides = getOverrides();
+export async function setOverride(productId: string, patch: ProductOverride): Promise<void> {
+  const overrides = await getOverrides();
   overrides[productId] = { ...overrides[productId], ...patch };
-  writeJsonFile(OVERRIDES_FILE, overrides);
+  await writeJsonFile(OVERRIDES_FILE, overrides);
 }
 
-export function getCustomProducts(): Product[] {
+export async function getCustomProducts(): Promise<Product[]> {
   return readJsonFile<Product[]>(CUSTOM_PRODUCTS_FILE, []);
 }
 
-export function addCustomProduct(product: Product): void {
-  const products = getCustomProducts();
+export async function addCustomProduct(product: Product): Promise<void> {
+  const products = await getCustomProducts();
   products.push(product);
-  writeJsonFile(CUSTOM_PRODUCTS_FILE, products);
+  await writeJsonFile(CUSTOM_PRODUCTS_FILE, products);
 }
 
-export function updateCustomProduct(productId: string, patch: Partial<Product>): void {
-  const products = getCustomProducts();
+export async function updateCustomProduct(productId: string, patch: Partial<Product>): Promise<void> {
+  const products = await getCustomProducts();
   const next = products.map((p) => (p.id === productId ? { ...p, ...patch } : p));
-  writeJsonFile(CUSTOM_PRODUCTS_FILE, next);
+  await writeJsonFile(CUSTOM_PRODUCTS_FILE, next);
 }
 
-export function removeCustomProduct(productId: string): void {
-  const products = getCustomProducts().filter((p) => p.id !== productId);
-  writeJsonFile(CUSTOM_PRODUCTS_FILE, products);
+export async function removeCustomProduct(productId: string): Promise<void> {
+  const products = (await getCustomProducts()).filter((p) => p.id !== productId);
+  await writeJsonFile(CUSTOM_PRODUCTS_FILE, products);
 }

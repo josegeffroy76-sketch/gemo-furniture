@@ -5,9 +5,8 @@ import { formatPrice } from "@/lib/format";
 import { isStripeConfigured } from "@/lib/stripe";
 import { isShippoConfigured } from "@/lib/shippo";
 
-export default function AdminDashboardPage() {
-  const products = getAllProducts();
-  const orders = getOrders();
+export default async function AdminDashboardPage() {
+  const [products, orders] = await Promise.all([getAllProducts(), getOrders()]);
   const revenue = orders.reduce((sum, o) => sum + o.amountTotal, 0);
   const lowStock = products.filter((p) => p.stock <= 5);
 

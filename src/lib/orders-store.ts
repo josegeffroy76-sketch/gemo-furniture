@@ -21,13 +21,13 @@ export interface OrderRecord {
 
 const ORDERS_FILE = "orders.json";
 
-export function getOrders(): OrderRecord[] {
+export async function getOrders(): Promise<OrderRecord[]> {
   return readJsonFile<OrderRecord[]>(ORDERS_FILE, []);
 }
 
-export function saveOrder(order: OrderRecord): void {
-  const orders = getOrders();
+export async function saveOrder(order: OrderRecord): Promise<void> {
+  const orders = await getOrders();
   if (orders.some((o) => o.id === order.id)) return; // idempotent on webhook retries
   orders.unshift(order);
-  writeJsonFile(ORDERS_FILE, orders);
+  await writeJsonFile(ORDERS_FILE, orders);
 }

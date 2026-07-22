@@ -33,7 +33,7 @@ export async function GET() {
   if (!(await isAdminAuthenticated())) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
-  return NextResponse.json({ products: getAllProducts() });
+  return NextResponse.json({ products: await getAllProducts() });
 }
 
 export async function POST(request: Request) {
@@ -62,7 +62,7 @@ export async function POST(request: Request) {
     ...parsed.data,
   };
 
-  addCustomProduct(product);
+  await addCustomProduct(product);
   revalidatePath("/", "layout");
 
   return NextResponse.json({ product }, { status: 201 });

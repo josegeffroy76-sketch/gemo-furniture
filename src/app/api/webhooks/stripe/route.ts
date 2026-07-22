@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     try {
       const lineItems = await stripe.checkout.sessions.listLineItems(session.id, { limit: 100 });
 
-      saveOrder({
+      await saveOrder({
         id: session.id,
         createdAt: new Date(session.created * 1000).toISOString(),
         customerEmail: session.customer_details?.email ?? null,

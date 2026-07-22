@@ -14,9 +14,8 @@ const WHY_GEMO = [
   { icon: ShieldCheck, text: "Outstanding value without sacrificing quality" },
 ];
 
-export default function HomePage() {
-  const bestsellers = getBestsellers(4);
-  const newArrivals = getNewArrivals(4);
+export default async function HomePage() {
+  const [bestsellers, newArrivals] = await Promise.all([getBestsellers(4), getNewArrivals(4)]);
   const featured = bestsellers.length ? bestsellers : newArrivals;
 
   return (

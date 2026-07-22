@@ -51,9 +51,9 @@ export async function PATCH(
   }
 
   if (id.startsWith("custom-")) {
-    updateCustomProduct(id, parsed.data);
+    await updateCustomProduct(id, parsed.data);
   } else {
-    setOverride(id, parsed.data);
+    await setOverride(id, parsed.data);
   }
 
   revalidateCatalog();
@@ -71,10 +71,10 @@ export async function DELETE(
   const { id } = await params;
 
   if (id.startsWith("custom-")) {
-    removeCustomProduct(id);
+    await removeCustomProduct(id);
   } else {
     // Starter-catalog items are code-defined, so "delete" hides them instead.
-    setOverride(id, { hidden: true });
+    await setOverride(id, { hidden: true });
   }
 
   revalidateCatalog();

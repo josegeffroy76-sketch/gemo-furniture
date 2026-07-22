@@ -32,12 +32,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
 
-  const items = parsed.data.lines
-    .map((line) => {
-      const product = getProductById(line.productId);
+  const resolvedItems = await Promise.all(
+    parsed.data.lines.map(async (line) => {
+      const product = await getProductById(line.productId);
       return product ? { product, quantity: line.quantity } : null;
     })
-    .filter((x): x is { product: NonNullable<ReturnType<typeof getProductById>>; quantity: number } => x !== null);
+  );
+  const items = resolvedItems.filter(
+    (x): x is { product: NonNullable<Awaited<ReturnType<typeof getProductById>>>; quantity: number } => x !== null
+  );
 
   if (items.length === 0) {
     return NextResponse.json({ error: "No valid items in cart." }, { status: 400 });

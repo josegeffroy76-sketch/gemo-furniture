@@ -52,9 +52,9 @@ export async function POST(request: Request) {
   const { lines, address, shippingRate } = parsed.data;
 
   // Re-derive every price server-side from the catalog — never trust client-sent prices.
-  const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = lines
-    .map((line): Stripe.Checkout.SessionCreateParams.LineItem | null => {
-      const product = getProductById(line.productId);
+  const resolvedLines = await Promise.all(
+    lines.map(async (line): Promise<Stripe.Checkout.SessionCreateParams.LineItem | null> => {
+      const product = await getProductById(line.productId);
       if (!product || product.stock < 1) return null;
       return {
         quantity: line.quantity,
@@ -68,7 +68,10 @@ export async function POST(request: Request) {
         },
       };
     })
-    .filter((x): x is NonNullable<typeof x> => x !== null);
+  );
+  const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = resolvedLines.filter(
+    (x): x is NonNullable<typeof x> => x !== null
+  );
 
   if (lineItems.length === 0) {
     return NextResponse.json({ error: "No valid items to check out." }, { status: 400 });
