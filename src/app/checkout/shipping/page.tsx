@@ -6,6 +6,9 @@ import { Loader2, Truck, ChevronLeft } from "lucide-react";
 import { useCartDetails } from "@/lib/cart-store";
 import { formatPrice } from "@/lib/format";
 import type { ShippingRateOption } from "@/lib/shippo";
+import AddressAutocomplete from "@/components/AddressAutocomplete";
+
+const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
 
 const US_STATES = [
   "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA",
@@ -122,12 +125,37 @@ export default function ShippingPage() {
               value={address.email}
               onChange={(e) => setAddress({ ...address, email: e.target.value })}
             />
-            <input
-              className="col-span-2 rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
-              placeholder="Street address"
-              value={address.street1}
-              onChange={(e) => setAddress({ ...address, street1: e.target.value })}
-            />
+            {GOOGLE_MAPS_API_KEY ? (
+              <div className="col-span-2">
+                <AddressAutocomplete
+                  apiKey={GOOGLE_MAPS_API_KEY}
+                  onSelect={(picked) =>
+                    setAddress((prev) => ({
+                      ...prev,
+                      street1: picked.street1 || prev.street1,
+                      city: picked.city || prev.city,
+                      state: picked.state || prev.state,
+                      zip: picked.zip || prev.zip,
+                    }))
+                  }
+                />
+                {/* Kept as a visible, editable fallback — autocomplete fills it, but
+                    typos or addresses without a matching suggestion still work. */}
+                <input
+                  className="mt-2 w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+                  placeholder="Street address (auto-filled above, or type it directly)"
+                  value={address.street1}
+                  onChange={(e) => setAddress({ ...address, street1: e.target.value })}
+                />
+              </div>
+            ) : (
+              <input
+                className="col-span-2 rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
+                placeholder="Street address"
+                value={address.street1}
+                onChange={(e) => setAddress({ ...address, street1: e.target.value })}
+              />
+            )}
             <input
               className="col-span-2 rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
               placeholder="Apt, suite, etc. (optional)"

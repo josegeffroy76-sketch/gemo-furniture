@@ -75,3 +75,12 @@ body {
     padding-inline: 2rem;
   }
 }
+
+/* Google Places autocomplete (checkout shipping address) — the web
+   component ships with its own default look; we just make sure it fills
+   its container so it lines up with the rest of the form fields. */
+.gemo-address-autocomplete,
+.gemo-address-autocomplete gmp-place-autocomplete {
+  display: block;
+  width: 100%;
+}

@@ -36,6 +36,7 @@ don't need any API keys just to click around locally.
 | Admin panel (`/admin`) | Locked out | `ADMIN_PASSWORD` |
 | Product photo uploads in `/admin/products` | Shows a friendly "not set up yet" message | `BLOB_READ_WRITE_TOKEN` (Vercel Blob) |
 | Admin edits & orders persisting in production | **Fails in production without it** — local dev works via a JSON-file fallback | `KV_REST_API_URL` / `KV_REST_API_TOKEN` (Vercel Redis/KV) |
+| Address autocomplete at checkout | Falls back to a plain manual address field | `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` (Google Places) |
 
 See `.env.example` for every variable and where to get each key.
 
@@ -102,6 +103,31 @@ The parcel dimensions used for rating are currently a conservative shared box
 estimate based on total cart weight (see `buildParcelFromCart` in
 `src/lib/shippo.ts`). For accurate large-furniture rates, add real per-product
 package dimensions to the catalog and use those instead once you have them.
+
+## Address autocomplete (Google Places)
+
+The checkout shipping form (`src/app/checkout/shipping/page.tsx`) uses
+`src/components/AddressAutocomplete.tsx` to offer live address suggestions
+as the customer types, cutting down on shipping typos. It's optional — with
+no API key configured, the form just shows a plain manual street-address
+field, unchanged from before.
+
+To enable it:
+
+1. Create a project at the [Google Cloud Console](https://console.cloud.google.com)
+   and enable **Places API (New)**. This requires a billing account on the
+   project (a card on file), but normal usage for a store this size should
+   stay within Google's monthly free credit.
+2. Create an API key under **APIs & Services → Credentials**, then restrict
+   it to **Places API (New)** and to your site's domain under **HTTP
+   referrers** — this key runs in the browser, so restricting it (rather
+   than keeping it secret) is what keeps it safe to expose.
+3. Add it as `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` in Vercel (and `.env.local`
+   for local development), then redeploy.
+
+Selecting a suggestion fills in the street address, city, state, and ZIP;
+the street address field stays visible and editable in case a customer's
+address doesn't have a matching suggestion.
 
 ## Payments (Stripe)
 
