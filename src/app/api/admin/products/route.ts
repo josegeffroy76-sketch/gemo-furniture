@@ -25,6 +25,7 @@ const newProductSchema = z.object({
   description: z.string().min(1),
   dimensions: z.string().min(1),
   weightLbs: z.number().min(0),
+  images: z.array(z.string().url()).optional(),
   stock: z.number().int().min(0),
 });
 
@@ -62,8 +63,7 @@ export async function POST(request: Request) {
   };
 
   addCustomProduct(product);
-  revalidatePath("/shop");
-  revalidatePath("/");
+  revalidatePath("/", "layout");
 
   return NextResponse.json({ product }, { status: 201 });
 }

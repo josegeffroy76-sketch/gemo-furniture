@@ -13,7 +13,7 @@ export default function CatalogLoader() {
 
   useEffect(() => {
     let cancelled = false;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional one-time fetch-on-mount to hydrate the client catalog cache
+    // Intentional one-time fetch-on-mount to hydrate the client catalog cache.
     fetch("/api/catalog")
       .then((res) => res.json())
       .then((data) => {

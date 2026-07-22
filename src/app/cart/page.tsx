@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Trash2, ShoppingBag } from "lucide-react";
-import ProductImage from "@/components/ProductImage";
+import ProductPhoto from "@/components/ProductPhoto";
 import QuantityInput from "@/components/QuantityInput";
 import { useCartStore, useCartDetails } from "@/lib/cart-store";
 import { formatPrice } from "@/lib/format";
@@ -40,9 +40,8 @@ export default function CartPage() {
             {items.map(({ product, quantity }) => (
               <li key={product.id} className="flex gap-4 py-5">
                 <Link href={`/shop/${product.slug}`} className="shrink-0">
-                  <ProductImage
-                    icon={product.icon}
-                    colorway={product.colorway}
+                  <ProductPhoto
+                    product={product}
                     className="h-24 w-24"
                     iconClassName="h-10 w-10"
                   />

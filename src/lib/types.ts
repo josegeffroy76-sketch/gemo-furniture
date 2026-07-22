@@ -31,6 +31,7 @@ export interface Product {
   weightLbs: number;
   icon: ProductIcon;
   colorway: string; // hex used for the placeholder art tint
+  images?: string[]; // uploaded product photo URLs (Vercel Blob) — falls back to the icon placeholder when empty
   stock: number;
   bestseller?: boolean;
   newArrival?: boolean;

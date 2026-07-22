@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Product } from "@/lib/types";
 import { formatPrice, percentOff } from "@/lib/format";
-import ProductImage from "./ProductImage";
+import ProductPhoto from "./ProductPhoto";
 
 export default function ProductCard({ product }: { product: Product }) {
   const off = percentOff(product.price, product.compareAtPrice);
@@ -12,9 +12,8 @@ export default function ProductCard({ product }: { product: Product }) {
       className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-white/60 transition-shadow hover:shadow-lg hover:shadow-brand-900/5"
     >
       <div className="relative">
-        <ProductImage
-          icon={product.icon}
-          colorway={product.colorway}
+        <ProductPhoto
+          product={product}
           className="aspect-square w-full transition-transform duration-300 group-hover:scale-[1.03]"
           iconClassName="h-20 w-20"
         />

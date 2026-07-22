@@ -4,17 +4,35 @@ import { z } from "zod";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { setOverride, updateCustomProduct, removeCustomProduct } from "@/lib/catalog-store";
 
+const CATEGORY_SLUGS = [
+  "sofas-sectionals",
+  "sofa-beds",
+  "bedroom",
+  "storage",
+  "dining",
+  "home-office",
+  "accent-decor",
+] as const;
+
 const patchSchema = z.object({
   name: z.string().min(1).optional(),
+  category: z.enum(CATEGORY_SLUGS).optional(),
   price: z.number().int().min(0).optional(),
   compareAtPrice: z.number().int().min(0).optional(),
+  shortDescription: z.string().min(1).optional(),
+  description: z.string().min(1).optional(),
+  dimensions: z.string().min(1).optional(),
+  weightLbs: z.number().min(0).optional(),
+  images: z.array(z.string().url()).optional(),
   stock: z.number().int().min(0).optional(),
   hidden: z.boolean().optional(),
 });
 
 function revalidateCatalog() {
-  revalidatePath("/shop");
-  revalidatePath("/");
+  // Broad invalidation: product edits are infrequent admin actions, so
+  // correctness (customers never see stale price/photos) wins over the
+  // marginal cache-hit savings of narrower revalidation.
+  revalidatePath("/", "layout");
 }
 
 export async function PATCH(

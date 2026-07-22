@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronRight, Truck, ShieldCheck, RotateCcw } from "lucide-react";
-import ProductImage from "@/components/ProductImage";
+import ProductPhoto from "@/components/ProductPhoto";
 import ProductCard from "@/components/ProductCard";
 import AddToCartButton from "@/components/AddToCartButton";
 import { getAllProducts, getProductBySlug, getProductsByCategory } from "@/lib/products";
@@ -56,9 +56,8 @@ export default async function ProductPage({
       </nav>
 
       <div className="mt-6 grid gap-10 md:grid-cols-2">
-        <ProductImage
-          icon={product.icon}
-          colorway={product.colorway}
+        <ProductPhoto
+          product={product}
           className="aspect-square w-full"
           iconClassName="h-32 w-32"
         />

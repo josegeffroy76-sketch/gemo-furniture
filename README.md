@@ -33,6 +33,7 @@ don't need any API keys just to click around locally.
 | Live carrier shipping rates (Shippo) | Falls back to a flat-rate estimate | `SHIPPO_API_TOKEN` |
 | Order log in `/admin/orders` | Empty until the webhook is configured | `STRIPE_WEBHOOK_SECRET` |
 | Admin panel (`/admin`) | Locked out | `ADMIN_PASSWORD` |
+| Product photo uploads in `/admin/products` | Shows a friendly "not set up yet" message | `BLOB_READ_WRITE_TOKEN` (Vercel Blob) |
 
 See `.env.example` for every variable and where to get each key.
 
@@ -47,20 +48,27 @@ products and photos, either:
    category, stock). Product photography isn't wired to real image files yet
    (see below); every product currently renders a colored icon placeholder.
 2. **Admin panel path:** once `ADMIN_PASSWORD` is set, use `/admin/products`
-   to add products, and edit price/stock/visibility on the starter catalog —
-   changes save to `data/product-overrides.json` and `data/custom-products.json`
-   and show up on the storefront immediately.
+   to add products, edit every field (name, category, price, description,
+   dimensions, weight, stock, visibility) on the starter catalog or your own
+   items, and upload real photos — changes save to
+   `data/product-overrides.json` and `data/custom-products.json` and show up
+   on the storefront immediately.
 
 ### Adding real product photos
 
-Product images currently render as a stylized icon on a brand-tinted
-background (see `src/components/ProductImage.tsx`), so the site looks
-intentional without real photography yet. To swap in real photos:
+Any product without an uploaded photo renders a stylized icon on a
+brand-tinted background (see `src/components/ProductImage.tsx`) so the site
+never looks broken while you're still adding real photography. To add real
+photos, use the **Edit** (pencil) button on a product in `/admin/products` —
+the photo grid there uploads directly to Vercel Blob storage and photos
+appear on the storefront immediately, no code changes needed.
 
-1. Add your image files to `/public/products/`.
-2. Add an `images: string[]` field to the `Product` type in `src/lib/types.ts`.
-3. Replace `<ProductImage />` in `ProductCard.tsx` and
-   `src/app/shop/[slug]/page.tsx` with Next's `<Image src={product.images[0]} />`.
+This requires `BLOB_READ_WRITE_TOKEN`, which Vercel sets automatically once
+you connect Blob storage: in the Vercel dashboard, go to **Storage → Create
+Database → Blob**, connect it to this project, then redeploy. Until then,
+uploads show a friendly message explaining that step instead of failing.
+For local development, run `vercel env pull` after connecting Blob storage
+to pull the token into `.env.local`.
 
 ## Admin panel
 
@@ -68,7 +76,9 @@ Visit `/admin` after setting `ADMIN_PASSWORD` (and optionally
 `ADMIN_SESSION_SECRET`) in `.env.local`. From there you can:
 
 - View a dashboard of product count, orders, revenue, and low-stock items
-- Add new products, or edit price/stock/visibility on existing ones
+- Add new products, or edit any field (name, category, price, compare-at
+  price, description, dimensions, weight, stock, visibility) on existing ones
+- Upload and remove product photos (requires `BLOB_READ_WRITE_TOKEN`, see above)
 - View the order log (once the Stripe webhook is configured)
 
 This is a single shared admin password, not a multi-user system — good for a
