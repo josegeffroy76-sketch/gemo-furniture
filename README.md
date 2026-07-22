@@ -99,10 +99,15 @@ destination address and the items in the cart. Configure:
 Until `SHIPPO_API_TOKEN` is set, checkout uses a transparent flat-rate
 estimate (clearly labeled as an estimate) so the flow is fully testable.
 
-The parcel dimensions used for rating are currently a conservative shared box
-estimate based on total cart weight (see `buildParcelFromCart` in
-`src/lib/shippo.ts`). For accurate large-furniture rates, add real per-product
-package dimensions to the catalog and use those instead once you have them.
+Each product can have real packed-box dimensions (`shipLengthIn` /
+`shipWidthIn` / `shipHeightIn`, in inches) set on it via the **Edit** panel
+in `/admin/products` — Shippo then rates one parcel per cart unit using that
+product's real size and weight (see `buildParcelsFromCart` in
+`src/lib/shippo.ts`). Set these for every real product before launch: a
+missing/generic box size is what caused wildly inflated, UPS-only quotes
+during testing — an oversized box racks up "dimensional weight" charges,
+and USPS/FedEx Ground reject oversized packages outright rather than quote
+them, leaving only freight-capable carriers like UPS to respond.
 
 ## Address autocomplete (Google Places)
 
