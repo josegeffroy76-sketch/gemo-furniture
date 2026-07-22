@@ -30,6 +30,33 @@ type EditableFields = {
   stock: string;
 };
 
+/**
+ * Safely reads a fetch Response as JSON. Serverless functions can
+ * occasionally return an empty/non-JSON body (a platform timeout or a
+ * request-size rejection before our route code even runs), which makes
+ * `res.json()` throw a cryptic "unexpected end of data" error. This turns
+ * that into a friendly message instead of crashing the UI.
+ */
+async function parseJsonResponse<T>(res: Response): Promise<{ data: T | null; error: string | null }> {
+  const text = await res.text();
+  if (!text) {
+    return {
+      data: null,
+      error: res.ok
+        ? null
+        : `The server didn't respond as expected (status ${res.status}). Please try again — if uploading a photo, try a smaller image.`,
+    };
+  }
+  try {
+    return { data: JSON.parse(text), error: null };
+  } catch {
+    return {
+      data: null,
+      error: "The server sent back an unexpected response. Please try again in a moment.",
+    };
+  }
+}
+
 function toEditableFields(p: Product): EditableFields {
   return {
     name: p.name,
@@ -54,8 +81,8 @@ export default function AdminProductsPage() {
 
   const load = useCallback(async () => {
     const res = await fetch("/api/admin/products");
-    const data = await res.json();
-    setProducts(data.products ?? []);
+    const { data } = await parseJsonResponse<{ products: Product[] }>(res);
+    setProducts(data?.products ?? []);
   }, []);
 
   useEffect(() => {
@@ -99,8 +126,9 @@ export default function AdminProductsPage() {
           stock: parseInt(form.stock, 10) || 0,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Couldn't add product.");
+      const { data, error: parseError } = await parseJsonResponse<{ error?: string }>(res);
+      if (parseError) throw new Error(parseError);
+      if (!res.ok) throw new Error(data?.error ?? "Couldn't add product.");
       setForm(emptyForm);
       setShowForm(false);
       load();
@@ -362,8 +390,9 @@ function EditProductPanel({
       const formData = new FormData();
       formData.append("file", file);
       const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Upload failed.");
+      const { data, error: parseError } = await parseJsonResponse<{ url: string; error?: string }>(res);
+      if (parseError) throw new Error(parseError);
+      if (!res.ok || !data) throw new Error(data?.error ?? "Upload failed.");
       await persistImages([...images, data.url]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed.");
@@ -397,8 +426,9 @@ function EditProductPanel({
           stock: parseInt(fields.stock, 10) || 0,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Couldn't save changes.");
+      const { data, error: parseError } = await parseJsonResponse<{ error?: string }>(res);
+      if (parseError) throw new Error(parseError);
+      if (!res.ok) throw new Error(data?.error ?? "Couldn't save changes.");
       onSaved();
       onClose();
     } catch (err) {
