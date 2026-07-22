@@ -1,26 +1,77 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #FBF7F2;
+  --foreground: #221F1C;
+
+  /* GEMO Furniture brand palette (derived from logo) */
+  --color-brand-50: #FBF0EB;
+  --color-brand-100: #F5DCD1;
+  --color-brand-200: #E8B6A2;
+  --color-brand-300: #DA8E70;
+  --color-brand-400: #CC6947;
+  --color-brand-500: #BF4E30;
+  --color-brand-600: #A43F26;
+  --color-brand-700: #83321F;
+  --color-brand-800: #642619;
+  --color-brand-900: #451A11;
+
+  --color-ink: #221F1C;
+  --color-ink-soft: #504A44;
+  --color-cream: #FBF7F2;
+  --color-sand: #F1E7DA;
+  --color-sand-dark: #E5D5C1;
+  --color-line: #E7DDD1;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-brand-50: var(--color-brand-50);
+  --color-brand-100: var(--color-brand-100);
+  --color-brand-200: var(--color-brand-200);
+  --color-brand-300: var(--color-brand-300);
+  --color-brand-400: var(--color-brand-400);
+  --color-brand-500: var(--color-brand-500);
+  --color-brand-600: var(--color-brand-600);
+  --color-brand-700: var(--color-brand-700);
+  --color-brand-800: var(--color-brand-800);
+  --color-brand-900: var(--color-brand-900);
+
+  --color-ink: var(--color-ink);
+  --color-ink-soft: var(--color-ink-soft);
+  --color-cream: var(--color-cream);
+  --color-sand: var(--color-sand);
+  --color-sand-dark: var(--color-sand-dark);
+  --color-line: var(--color-line);
+
+  /*
+   * System font stacks — no external font requests at build or runtime.
+   * To match the brand more closely later, self-host real font files with
+   * next/font/local (e.g. Fraunces + Jost .woff2 files in /public/fonts)
+   * and swap these two lines for the generated CSS variables.
+   */
+  --font-sans: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, ui-sans-serif, system-ui,
+    sans-serif;
+  --font-display: Georgia, "Iowan Old Style", "Palatino Linotype", ui-serif, serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+.container-gemo {
+  width: 100%;
+  max-width: 80rem;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .container-gemo {
+    padding-inline: 2rem;
+  }
 }

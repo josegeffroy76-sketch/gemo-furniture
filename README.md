@@ -1,36 +1,154 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GEMO Furniture — E-commerce Site
 
-## Getting Started
+A custom-built Next.js storefront for GEMO Furniture: affordable, space-saving
+furniture for apartments, dorms, and first homes, shipped across the USA.
 
-First, run the development server:
+## Stack
+
+- **Next.js 16** (App Router, TypeScript) + **Tailwind CSS v4**
+- **Zustand** for cart state (persisted to the browser)
+- **Stripe Checkout** for payment
+- **Shippo** for live USPS/UPS/FedEx shipping rate quotes
+- A lightweight JSON-file "database" for admin edits and the order log (see
+  **Moving to a real database** below before launch)
+
+## Getting started
 
 ```bash
+npm install
+cp .env.example .env.local   # then fill in your API keys
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000. The storefront, cart, and checkout flow all work
+out of the box with placeholder data and a flat-rate shipping estimate — you
+don't need any API keys just to click around locally.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## What's wired up vs. what needs your keys
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Feature | Works without setup? | Needs |
+|---|---|---|
+| Browse catalog, cart, quantity, persistence | Yes | — |
+| Checkout payment (Stripe) | Shows a friendly error until configured | `STRIPE_SECRET_KEY` |
+| Live carrier shipping rates (Shippo) | Falls back to a flat-rate estimate | `SHIPPO_API_TOKEN` |
+| Order log in `/admin/orders` | Empty until the webhook is configured | `STRIPE_WEBHOOK_SECRET` |
+| Admin panel (`/admin`) | Locked out | `ADMIN_PASSWORD` |
 
-## Learn More
+See `.env.example` for every variable and where to get each key.
 
-To learn more about Next.js, take a look at the following resources:
+## Adding your real product catalog
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Right now the catalog is placeholder data in `src/lib/products.ts` (14 sample
+products) so every page is fully browsable end to end. To bring in your real
+products and photos, either:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. **Quick path:** edit `src/lib/products.ts` directly — replace the `PRODUCTS`
+   array with your real items (name, price in cents, description, dimensions,
+   category, stock). Product photography isn't wired to real image files yet
+   (see below); every product currently renders a colored icon placeholder.
+2. **Admin panel path:** once `ADMIN_PASSWORD` is set, use `/admin/products`
+   to add products, and edit price/stock/visibility on the starter catalog —
+   changes save to `data/product-overrides.json` and `data/custom-products.json`
+   and show up on the storefront immediately.
 
-## Deploy on Vercel
+### Adding real product photos
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Product images currently render as a stylized icon on a brand-tinted
+background (see `src/components/ProductImage.tsx`), so the site looks
+intentional without real photography yet. To swap in real photos:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Add your image files to `/public/products/`.
+2. Add an `images: string[]` field to the `Product` type in `src/lib/types.ts`.
+3. Replace `<ProductImage />` in `ProductCard.tsx` and
+   `src/app/shop/[slug]/page.tsx` with Next's `<Image src={product.images[0]} />`.
+
+## Admin panel
+
+Visit `/admin` after setting `ADMIN_PASSWORD` (and optionally
+`ADMIN_SESSION_SECRET`) in `.env.local`. From there you can:
+
+- View a dashboard of product count, orders, revenue, and low-stock items
+- Add new products, or edit price/stock/visibility on existing ones
+- View the order log (once the Stripe webhook is configured)
+
+This is a single shared admin password, not a multi-user system — good for a
+small team getting started, but plan to move to real user accounts if you add
+staff later.
+
+## Shipping (Shippo)
+
+`src/lib/shippo.ts` calls Shippo to quote live USPS/UPS/FedEx rates for a
+destination address and the items in the cart. Configure:
+
+- `SHIPPO_API_TOKEN` — from your Shippo account
+- `WAREHOUSE_STREET1` / `WAREHOUSE_CITY` / `WAREHOUSE_STATE` / `WAREHOUSE_ZIP` — your ship-from address
+
+Until `SHIPPO_API_TOKEN` is set, checkout uses a transparent flat-rate
+estimate (clearly labeled as an estimate) so the flow is fully testable.
+
+The parcel dimensions used for rating are currently a conservative shared box
+estimate based on total cart weight (see `buildParcelFromCart` in
+`src/lib/shippo.ts`). For accurate large-furniture rates, add real per-product
+package dimensions to the catalog and use those instead once you have them.
+
+## Payments (Stripe)
+
+- Set `STRIPE_SECRET_KEY` (test key while developing, live key at launch).
+- Checkout Sessions are created server-side in `src/app/api/checkout/route.ts`
+  — prices are always re-derived from the server catalog, never trusted from
+  the browser.
+- To log paid orders into `/admin/orders`, add a webhook endpoint in the
+  [Stripe Dashboard](https://dashboard.stripe.com/webhooks) pointing to
+  `https://yourdomain.com/api/webhooks/stripe` for the `checkout.session.completed`
+  event, and set `STRIPE_WEBHOOK_SECRET` to the signing secret it gives you.
+  For local testing, use the Stripe CLI: `stripe listen --forward-to localhost:3000/api/webhooks/stripe`.
+
+## Moving to a real database
+
+The JSON files under `/data` (`product-overrides.json`, `custom-products.json`,
+`orders.json`) are a zero-config way to make the admin panel and order log
+actually work today. **They will not persist in production on serverless
+hosts like Vercel** — the filesystem there is read-only/ephemeral at runtime.
+
+Before taking real orders in production, replace `src/lib/json-file-store.ts`'s
+read/write calls with a real database — e.g. Postgres via
+[Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres),
+[Neon](https://neon.tech), or [Supabase](https://supabase.com), using an ORM
+like [Prisma](https://www.prisma.io) or [Drizzle](https://orm.drizzle.team).
+`src/lib/catalog-store.ts` and `src/lib/orders-store.ts` are the only two
+files that talk to storage — swapping their internals is enough, no page or
+API route code needs to change.
+
+## Deploying
+
+This app deploys cleanly to [Vercel](https://vercel.com/new) (the team behind
+Next.js): connect the repo, add the environment variables from `.env.example`
+in the Vercel project settings, and deploy. Remember to point the Stripe
+webhook at your live domain once it's up, and swap the JSON file store for a
+real database first (see above).
+
+## Project structure
+
+```
+src/
+  app/
+    page.tsx                     Home
+    about/page.tsx                About (brand story)
+    shop/page.tsx                  Catalog with category filter
+    shop/[slug]/page.tsx            Product detail
+    cart/page.tsx                    Cart
+    checkout/shipping/page.tsx        Address + live shipping rate selection
+    checkout/success|cancel/           Post-checkout pages
+    admin/                               Password-protected admin panel
+    api/checkout/                         Creates the Stripe Checkout Session
+    api/shipping/rates/                    Calls Shippo for live rates
+    api/webhooks/stripe/                    Logs paid orders
+    api/admin/products/                      Admin CRUD for the catalog
+  components/                    UI building blocks
+  lib/
+    products.ts                   Placeholder catalog + read functions
+    catalog-store.ts               Admin overrides / custom products (JSON)
+    orders-store.ts                 Order log (JSON)
+    cart-store.ts                    Zustand cart state
+    stripe.ts / shippo.ts              Payment / shipping integrations
+```
