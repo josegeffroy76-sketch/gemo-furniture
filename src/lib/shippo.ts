@@ -3,10 +3,10 @@ import type { Address, Product } from "./types";
 
 const WAREHOUSE_ORIGIN: Address = {
   name: "GEMO Furniture Warehouse",
-  street1: process.env.WAREHOUSE_STREET1 ?? "1201 Freight Way",
-  city: process.env.WAREHOUSE_CITY ?? "Ontario",
+  street1: process.env.WAREHOUSE_STREET1 ?? "1063 N Glassell St",
+  city: process.env.WAREHOUSE_CITY ?? "Orange",
   state: process.env.WAREHOUSE_STATE ?? "CA",
-  zip: process.env.WAREHOUSE_ZIP ?? "91761",
+  zip: process.env.WAREHOUSE_ZIP ?? "92867",
   country: "US",
 };
 
