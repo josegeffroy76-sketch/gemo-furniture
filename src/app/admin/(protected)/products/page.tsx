@@ -15,6 +15,9 @@ const emptyForm = {
   description: "",
   dimensions: "",
   weightLbs: "",
+  shipLengthIn: "",
+  shipWidthIn: "",
+  shipHeightIn: "",
   stock: "",
 };
 
@@ -27,6 +30,9 @@ type EditableFields = {
   description: string;
   dimensions: string;
   weightLbs: string;
+  shipLengthIn: string;
+  shipWidthIn: string;
+  shipHeightIn: string;
   stock: string;
 };
 
@@ -67,6 +73,9 @@ function toEditableFields(p: Product): EditableFields {
     description: p.description,
     dimensions: p.dimensions,
     weightLbs: String(p.weightLbs),
+    shipLengthIn: p.shipLengthIn ? String(p.shipLengthIn) : "",
+    shipWidthIn: p.shipWidthIn ? String(p.shipWidthIn) : "",
+    shipHeightIn: p.shipHeightIn ? String(p.shipHeightIn) : "",
     stock: String(p.stock),
   };
 }
@@ -123,6 +132,9 @@ export default function AdminProductsPage() {
           description: form.description || form.shortDescription,
           dimensions: form.dimensions,
           weightLbs: parseFloat(form.weightLbs) || 0,
+          shipLengthIn: form.shipLengthIn ? parseFloat(form.shipLengthIn) : undefined,
+          shipWidthIn: form.shipWidthIn ? parseFloat(form.shipWidthIn) : undefined,
+          shipHeightIn: form.shipHeightIn ? parseFloat(form.shipHeightIn) : undefined,
           stock: parseInt(form.stock, 10) || 0,
         }),
       });
@@ -217,6 +229,36 @@ export default function AdminProductsPage() {
             value={form.weightLbs}
             onChange={(e) => setForm({ ...form, weightLbs: e.target.value })}
           />
+          <div className="col-span-2 grid grid-cols-3 gap-3">
+            <input
+              type="number"
+              step="0.1"
+              placeholder="Ship box — Length (in)"
+              className="rounded-lg border border-line px-3 py-2 text-sm"
+              value={form.shipLengthIn}
+              onChange={(e) => setForm({ ...form, shipLengthIn: e.target.value })}
+            />
+            <input
+              type="number"
+              step="0.1"
+              placeholder="Ship box — Width (in)"
+              className="rounded-lg border border-line px-3 py-2 text-sm"
+              value={form.shipWidthIn}
+              onChange={(e) => setForm({ ...form, shipWidthIn: e.target.value })}
+            />
+            <input
+              type="number"
+              step="0.1"
+              placeholder="Ship box — Height (in)"
+              className="rounded-lg border border-line px-3 py-2 text-sm"
+              value={form.shipHeightIn}
+              onChange={(e) => setForm({ ...form, shipHeightIn: e.target.value })}
+            />
+          </div>
+          <p className="col-span-2 -mt-1.5 text-[11px] text-ink-soft/70">
+            Real packed-box dimensions used for live shipping quotes. Leave blank to use a
+            generic small-box estimate for this product.
+          </p>
           <input
             required
             placeholder="Short description"
@@ -423,6 +465,9 @@ function EditProductPanel({
           description: fields.description,
           dimensions: fields.dimensions,
           weightLbs: parseFloat(fields.weightLbs) || 0,
+          shipLengthIn: fields.shipLengthIn ? parseFloat(fields.shipLengthIn) : undefined,
+          shipWidthIn: fields.shipWidthIn ? parseFloat(fields.shipWidthIn) : undefined,
+          shipHeightIn: fields.shipHeightIn ? parseFloat(fields.shipHeightIn) : undefined,
           stock: parseInt(fields.stock, 10) || 0,
         }),
       });
@@ -531,6 +576,36 @@ function EditProductPanel({
           onChange={(e) => setFields({ ...fields, weightLbs: e.target.value })}
           placeholder="Weight (lb)"
         />
+        <div className="col-span-2 grid grid-cols-3 gap-3">
+          <input
+            type="number"
+            step="0.1"
+            className="rounded-lg border border-line px-3 py-2 text-sm"
+            value={fields.shipLengthIn}
+            onChange={(e) => setFields({ ...fields, shipLengthIn: e.target.value })}
+            placeholder="Ship box — Length (in)"
+          />
+          <input
+            type="number"
+            step="0.1"
+            className="rounded-lg border border-line px-3 py-2 text-sm"
+            value={fields.shipWidthIn}
+            onChange={(e) => setFields({ ...fields, shipWidthIn: e.target.value })}
+            placeholder="Ship box — Width (in)"
+          />
+          <input
+            type="number"
+            step="0.1"
+            className="rounded-lg border border-line px-3 py-2 text-sm"
+            value={fields.shipHeightIn}
+            onChange={(e) => setFields({ ...fields, shipHeightIn: e.target.value })}
+            placeholder="Ship box — Height (in)"
+          />
+        </div>
+        <p className="col-span-2 -mt-1.5 text-[11px] text-ink-soft/70">
+          Real packed-box dimensions used for live shipping quotes — not the assembled size
+          above. Leave blank to use a generic small-box estimate.
+        </p>
         <input
           className="col-span-2 rounded-lg border border-line px-3 py-2 text-sm"
           value={fields.shortDescription}

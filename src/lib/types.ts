@@ -29,6 +29,16 @@ export interface Product {
   features: string[];
   dimensions: string;
   weightLbs: number;
+  // Real packed-box dimensions (inches) used for live Shippo rate quotes.
+  // Optional — products without these fall back to a generic shared-box
+  // estimate (see buildParcelFromCart in src/lib/shippo.ts), which is what
+  // was causing inflated, UPS-only quotes for large items: a big one-size
+  // box has a huge "dimensional weight" that most carriers charge extra
+  // for, and some carriers (USPS, FedEx Ground) reject oversized packages
+  // outright rather than quote them.
+  shipLengthIn?: number;
+  shipWidthIn?: number;
+  shipHeightIn?: number;
   icon: ProductIcon;
   colorway: string; // hex used for the placeholder art tint
   images?: string[]; // uploaded product photo URLs (Vercel Blob) — falls back to the icon placeholder when empty

@@ -36,20 +36,52 @@ function getShippo(): Shippo {
   return shippoClient;
 }
 
-/** Combines cart line items into a single parcel using simple box-packing math. */
-function buildParcelFromCart(items: { product: Product; quantity: number }[]) {
-  const totalWeightLbs = items.reduce((sum, i) => sum + i.product.weightLbs * i.quantity, 0);
-  // Conservative flat-rate freight box estimate for small-space furniture.
-  // Swap this for real per-product package dimensions once the catalog is finalized.
-  return {
-    massUnit: "lb" as const,
-    weightUnit: "lb" as const,
-    weight: String(Math.max(totalWeightLbs, 1)),
-    distanceUnit: "in" as const,
-    height: "24",
-    length: "40",
-    width: "24",
-  };
+interface ShippoParcel {
+  massUnit: "lb";
+  weight: string;
+  distanceUnit: "in";
+  height: string;
+  length: string;
+  width: string;
+}
+
+// Only used as a last resort for products missing real ship dimensions.
+// IMPORTANT: this box is intentionally sized for small accent items, not
+// furniture — a big generic box has a huge "dimensional weight" that most
+// carriers bill extra for, and oversized packages get rejected outright by
+// USPS/FedEx Ground rather than quoted. Set shipLengthIn/shipWidthIn/
+// shipHeightIn on a product (via /admin/products) to get an accurate,
+// carrier-comparable quote instead of this fallback.
+const FALLBACK_BOX = { length: 20, width: 14, height: 14 };
+const MAX_PARCELS_PER_SHIPMENT = 20; // safety cap on the Shippo request size
+
+/**
+ * Builds one parcel per cart unit (not one shared box for the whole cart),
+ * using each product's own real ship dimensions + weight when set.
+ */
+function buildParcelsFromCart(items: { product: Product; quantity: number }[]): ShippoParcel[] {
+  const parcels: ShippoParcel[] = [];
+  for (const { product, quantity } of items) {
+    const hasRealDimensions = Boolean(
+      product.shipLengthIn && product.shipWidthIn && product.shipHeightIn
+    );
+    const box = hasRealDimensions
+      ? { length: product.shipLengthIn!, width: product.shipWidthIn!, height: product.shipHeightIn! }
+      : FALLBACK_BOX;
+    const perUnitWeight = Math.max(product.weightLbs || 1, 1);
+
+    for (let i = 0; i < quantity && parcels.length < MAX_PARCELS_PER_SHIPMENT; i++) {
+      parcels.push({
+        massUnit: "lb",
+        weight: String(perUnitWeight),
+        distanceUnit: "in",
+        height: String(box.height),
+        length: String(box.length),
+        width: String(box.width),
+      });
+    }
+  }
+  return parcels;
 }
 
 /**
@@ -66,7 +98,7 @@ export async function getShippingRates(
   }
 
   const shippo = getShippo();
-  const parcel = buildParcelFromCart(items);
+  const parcels = buildParcelsFromCart(items);
 
   const shipment = await shippo.shipments.create({
     addressFrom: {
@@ -88,16 +120,7 @@ export async function getShippingRates(
       phone: destination.phone,
       email: destination.email,
     },
-    parcels: [
-      {
-        massUnit: parcel.massUnit,
-        weight: parcel.weight,
-        distanceUnit: parcel.distanceUnit,
-        height: parcel.height,
-        length: parcel.length,
-        width: parcel.width,
-      },
-    ],
+    parcels,
     async: false,
   });
 

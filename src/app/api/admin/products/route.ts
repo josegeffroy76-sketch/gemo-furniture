@@ -25,6 +25,9 @@ const newProductSchema = z.object({
   description: z.string().min(1),
   dimensions: z.string().min(1),
   weightLbs: z.number().min(0),
+  shipLengthIn: z.number().min(0).optional(),
+  shipWidthIn: z.number().min(0).optional(),
+  shipHeightIn: z.number().min(0).optional(),
   images: z.array(z.string().url()).optional(),
   stock: z.number().int().min(0),
 });
