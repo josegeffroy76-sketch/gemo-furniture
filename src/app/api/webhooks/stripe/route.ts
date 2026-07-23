@@ -77,6 +77,7 @@ export async function POST(request: Request) {
         shippingCarrier: metadata.shippingCarrier ?? null,
         shippingServiceLevel: metadata.shippingServiceLevel ?? null,
         shippingAmount: metadata.shippingAmount ? Number(metadata.shippingAmount) : null,
+        taxAmount: session.total_details?.amount_tax ?? null,
         shippingAddress: checkoutAddress
           ? {
               line1: checkoutAddress.street1 ?? null,

@@ -24,6 +24,7 @@ export interface OrderRecord {
   shippingCarrier: string | null;
   shippingServiceLevel: string | null;
   shippingAmount: number | null; // cents, what the customer paid for shipping
+  taxAmount: number | null; // cents, sales tax collected via Stripe Tax (0/null if not applicable)
   shippingAddress: {
     line1?: string | null;
     line2?: string | null;

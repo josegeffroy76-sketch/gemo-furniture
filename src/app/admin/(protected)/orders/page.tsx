@@ -41,7 +41,14 @@ export default async function AdminOrdersPage() {
                   <td className="px-4 py-3 text-ink-soft">
                     {order.items.map((i) => `${i.quantity}× ${i.name}`).join(", ")}
                   </td>
-                  <td className="px-4 py-3 font-medium text-ink">{formatPrice(order.amountTotal)}</td>
+                  <td className="px-4 py-3 font-medium text-ink">
+                    {formatPrice(order.amountTotal)}
+                    {!!order.taxAmount && (
+                      <div className="text-[11px] font-normal text-ink-soft">
+                        incl. {formatPrice(order.taxAmount)} tax
+                      </div>
+                    )}
+                  </td>
                   <td className="px-4 py-3">
                     <span className="rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-700">
                       {order.status}

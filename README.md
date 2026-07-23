@@ -164,6 +164,34 @@ address doesn't have a matching suggestion.
   event, and set `STRIPE_WEBHOOK_SECRET` to the signing secret it gives you.
   For local testing, use the Stripe CLI: `stripe listen --forward-to localhost:3000/api/webhooks/stripe`.
 
+## Sales tax (Stripe Tax)
+
+Checkout uses [Stripe Tax](https://dashboard.stripe.com/settings/tax) to
+calculate US sales tax automatically — it adds a "Tax" line after the
+product subtotal and shipping, using the customer's address (attached to a
+Stripe Customer created at checkout time — see `src/app/api/checkout/route.ts`)
+to figure out the exact rate, including California's state + county + city
++ district combination.
+
+This requires a one-time setup in the Stripe Dashboard, not in code:
+
+1. Go to **Settings → Tax** and set your **Origin address** (the warehouse
+   address, since that's where you have a physical presence).
+2. Under **Registrations**, add **California** — physical presence there
+   (a warehouse, office, or employees) means you're required to collect CA
+   sales tax. Only add other states once you've confirmed with an
+   accountant that you've crossed that state's economic nexus threshold
+   (commonly $100k in sales or 200 transactions/year, but this varies by
+   state) — until a state is registered here, Stripe correctly charges $0
+   tax for orders shipping there rather than guessing.
+3. That's it — no `STRIPE_SECRET_KEY` changes needed. Until Stripe Tax is
+   turned on in the dashboard, `automatic_tax` still runs but simply
+   calculates $0 tax everywhere, so checkout keeps working either way.
+
+This isn't legal or tax advice — confirm your actual nexus obligations
+(which states, when to start collecting, filing requirements) with an
+accountant as the business grows into new states.
+
 ## Persisting admin data (Redis)
 
 **This is required before taking real orders.** Vercel's application

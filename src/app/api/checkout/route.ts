@@ -74,6 +74,9 @@ export async function POST(request: Request) {
   const { lines, address, shippingRate } = parsed.data;
 
   // Re-derive every price server-side from the catalog — never trust client-sent prices.
+  // tax_behavior: "exclusive" means Stripe Tax adds sales tax on top of this
+  // amount rather than treating it as tax-inclusive — matches how US retail
+  // pricing normally works (tax added at checkout, not baked into the price).
   const resolvedLines = await Promise.all(
     lines.map(async (line): Promise<Stripe.Checkout.SessionCreateParams.LineItem | null> => {
       const product = await getProductById(line.productId);
@@ -83,6 +86,7 @@ export async function POST(request: Request) {
         price_data: {
           currency: "usd",
           unit_amount: product.price,
+          tax_behavior: "exclusive",
           product_data: {
             name: product.name,
             metadata: { productId: product.id },
@@ -104,8 +108,14 @@ export async function POST(request: Request) {
     price_data: {
       currency: "usd",
       unit_amount: shippingRate.amount,
+      tax_behavior: "exclusive",
       product_data: {
         name: `Shipping — ${shippingRate.serviceLevel} (${shippingRate.carrier})`,
+        // Stripe's official "Shipping" tax code — lets Stripe Tax apply each
+        // state's own rules for whether delivery charges are taxable
+        // (it varies; e.g. taxable in most of CA, exempt in some other
+        // states) instead of taxing it the same as a physical product.
+        tax_code: "txcd_92010001",
         metadata: { shippingRateId: shippingRate.id },
       },
     },
@@ -116,10 +126,37 @@ export async function POST(request: Request) {
 
   try {
     const stripe = getStripe();
+
+    // Stripe Tax needs a customer address to determine the right
+    // jurisdiction (state, county, city, and — specifically for California
+    // — the correct combination of district taxes). We collect the address
+    // ourselves on our own shipping page rather than Stripe's, so we attach
+    // it to a Customer object up front instead of using Stripe's built-in
+    // address collection step.
+    const customer = await stripe.customers.create({
+      name: address.name,
+      email: address.email || undefined,
+      phone: address.phone,
+      address: {
+        line1: address.street1,
+        line2: address.street2,
+        city: address.city,
+        state: address.state,
+        postal_code: address.zip,
+        country: address.country || "US",
+      },
+    });
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: lineItems,
-      customer_email: address.email || undefined,
+      customer: customer.id,
+      // Automatically calculates sales tax based on the customer's address
+      // above and adds it as its own line after the product subtotal and
+      // shipping. Only actually charges tax in states where nexus has been
+      // registered in the Stripe Dashboard (Settings → Tax) — until that's
+      // set up there, this calculates $0 tax everywhere rather than erroring.
+      automatic_tax: { enabled: true },
       success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/checkout/cancel`,
       payment_intent_data: {
