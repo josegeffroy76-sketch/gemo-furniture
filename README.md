@@ -82,7 +82,13 @@ Visit `/admin` after setting `ADMIN_PASSWORD` (and optionally
 - Add new products, or edit any field (name, category, price, compare-at
   price, description, dimensions, weight, stock, visibility) on existing ones
 - Upload and remove product photos (requires `BLOB_READ_WRITE_TOKEN`, see above)
-- View the order log (once the Stripe webhook is configured)
+- View the order log (once the Stripe webhook is configured), and generate a
+  real, purchased shipping label — with the customer's address already
+  filled in — via the **Generate Label** button on each order (requires
+  `SHIPPO_API_TOKEN`; see **Shipping (Shippo)** below). This re-quotes a
+  fresh rate at click time and tries to match the carrier/service the
+  customer paid for; if that exact option is no longer available it falls
+  back to the cheapest rate and flags the price difference.
 
 This is a single shared admin password, not a multi-user system — good for a
 small team getting started, but plan to move to real user accounts if you add

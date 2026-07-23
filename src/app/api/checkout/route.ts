@@ -32,6 +32,14 @@ const bodySchema = z.object({
   }),
 });
 
+/** Stripe metadata values are capped at 500 characters. */
+function safeCartLinesMetadata(lines: { productId: string; quantity: number }[]): string {
+  const json = JSON.stringify(lines);
+  if (json.length <= 480) return json;
+  console.warn(`Cart too large to fit in Stripe metadata (${json.length} chars) — omitting cartLines.`);
+  return "[]";
+}
+
 export async function POST(request: Request) {
   if (!isStripeConfigured()) {
     return NextResponse.json(
@@ -117,6 +125,14 @@ export async function POST(request: Request) {
       metadata: {
         shippingRateId: shippingRate.id,
         shippingCarrier: shippingRate.carrier,
+        shippingServiceLevel: shippingRate.serviceLevel,
+        shippingAmount: String(shippingRate.amount),
+        // Stripe metadata values are capped at 500 characters — stored so the
+        // webhook can rebuild real per-product parcels when an admin
+        // generates a shipping label later (the checkout-time Shippo rate
+        // itself expires after a few days). Falls back to an empty array
+        // for unusually large carts rather than erroring the checkout.
+        cartLines: safeCartLinesMetadata(lines),
       },
     });
 

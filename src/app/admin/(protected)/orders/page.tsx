@@ -1,5 +1,6 @@
 import { getOrders } from "@/lib/orders-store";
 import { formatPrice } from "@/lib/format";
+import GenerateLabelButton from "@/components/GenerateLabelButton";
 
 export default async function AdminOrdersPage() {
   const orders = await getOrders();
@@ -16,7 +17,7 @@ export default async function AdminOrdersPage() {
         <p className="mt-10 text-sm text-ink-soft">No orders yet.</p>
       ) : (
         <div className="mt-6 overflow-x-auto rounded-xl border border-line bg-white/60">
-          <table className="w-full min-w-[640px] text-left text-sm">
+          <table className="w-full min-w-[820px] text-left text-sm">
             <thead>
               <tr className="border-b border-line text-xs uppercase tracking-wide text-ink-soft">
                 <th className="px-4 py-3 font-medium">Date</th>
@@ -24,6 +25,7 @@ export default async function AdminOrdersPage() {
                 <th className="px-4 py-3 font-medium">Items</th>
                 <th className="px-4 py-3 font-medium">Total</th>
                 <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">Shipping label</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
@@ -44,6 +46,9 @@ export default async function AdminOrdersPage() {
                     <span className="rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-700">
                       {order.status}
                     </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <GenerateLabelButton orderId={order.id} initialLabel={order.label ?? null} />
                   </td>
                 </tr>
               ))}

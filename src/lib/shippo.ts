@@ -84,23 +84,12 @@ function buildParcelsFromCart(items: { product: Product; quantity: number }[]): 
   return parcels;
 }
 
-/**
- * Fetches live shipping rates from Shippo for a cart + destination address.
- * Falls back to a transparent flat estimate if Shippo isn't configured yet,
- * so checkout keeps working during development.
- */
-export async function getShippingRates(
-  destination: Address,
-  items: { product: Product; quantity: number }[]
-): Promise<ShippingRateOption[]> {
-  if (!isShippoConfigured()) {
-    return getFallbackEstimate(items);
-  }
-
+/** Creates a Shippo shipment (live rate request) for a cart + destination. */
+async function createShipment(destination: Address, items: { product: Product; quantity: number }[]) {
   const shippo = getShippo();
   const parcels = buildParcelsFromCart(items);
 
-  const shipment = await shippo.shipments.create({
+  return shippo.shipments.create({
     addressFrom: {
       name: WAREHOUSE_ORIGIN.name,
       street1: WAREHOUSE_ORIGIN.street1,
@@ -123,6 +112,22 @@ export async function getShippingRates(
     parcels,
     async: false,
   });
+}
+
+/**
+ * Fetches live shipping rates from Shippo for a cart + destination address.
+ * Falls back to a transparent flat estimate if Shippo isn't configured yet,
+ * so checkout keeps working during development.
+ */
+export async function getShippingRates(
+  destination: Address,
+  items: { product: Product; quantity: number }[]
+): Promise<ShippingRateOption[]> {
+  if (!isShippoConfigured()) {
+    return getFallbackEstimate(items);
+  }
+
+  const shipment = await createShipment(destination, items);
 
   return shipment.rates
     .map((rate) => ({
@@ -133,6 +138,77 @@ export async function getShippingRates(
       estimatedDays: rate.estimatedDays ?? null,
     }))
     .sort((a, b) => a.amount - b.amount);
+}
+
+export interface PurchasedLabel {
+  url: string;
+  trackingNumber: string | null;
+  trackingUrlProvider: string | null;
+  carrier: string;
+  serviceLevel: string;
+  amount: number; // cents, what the fresh rate actually cost
+  matchedExactly: boolean; // false if the original carrier/service was no longer available and we fell back
+}
+
+/**
+ * Purchases a real shipping label for an already-placed order. Re-quotes a
+ * fresh rate rather than reusing the checkout-time one — Shippo only allows
+ * purchasing rates less than 7 days old — and tries to match the original
+ * carrier + service level the customer paid for. Falls back to the cheapest
+ * available rate (any carrier) if that exact combination isn't quotable
+ * anymore, flagging the fallback so the admin UI can warn about a possible
+ * price mismatch.
+ */
+export async function createShippingLabel(
+  destination: Address,
+  items: { product: Product; quantity: number }[],
+  desired: { carrier: string | null; serviceLevel: string | null }
+): Promise<PurchasedLabel> {
+  if (!isShippoConfigured()) {
+    throw new Error("Shippo isn't configured (SHIPPO_API_TOKEN missing) — can't purchase a real label.");
+  }
+  if (items.length === 0) {
+    throw new Error("No purchasable items on this order — nothing to build a parcel from.");
+  }
+
+  const shipment = await createShipment(destination, items);
+  const rates = shipment.rates ?? [];
+  if (rates.length === 0) {
+    throw new Error("Shippo didn't return any shipping rates for this address right now.");
+  }
+
+  const exactMatch = desired.carrier
+    ? rates.find(
+        (r) =>
+          (r.provider ?? "").toLowerCase() === desired.carrier!.toLowerCase() &&
+          (r.servicelevel?.name ?? "").toLowerCase() === (desired.serviceLevel ?? "").toLowerCase()
+      )
+    : undefined;
+
+  const cheapest = [...rates].sort((a, b) => parseFloat(a.amount) - parseFloat(b.amount))[0];
+  const chosenRate = exactMatch ?? cheapest;
+
+  const shippo = getShippo();
+  const transaction = await shippo.transactions.create({
+    rate: chosenRate.objectId ?? "",
+    labelFileType: "PDF",
+    async: false,
+  });
+
+  if (transaction.status !== "SUCCESS" || !transaction.labelUrl) {
+    const reason = transaction.messages?.map((m) => m.text).join("; ") || "Unknown error.";
+    throw new Error(`Shippo couldn't create the label: ${reason}`);
+  }
+
+  return {
+    url: transaction.labelUrl,
+    trackingNumber: transaction.trackingNumber ?? null,
+    trackingUrlProvider: transaction.trackingUrlProvider ?? null,
+    carrier: chosenRate.provider ?? "Carrier",
+    serviceLevel: chosenRate.servicelevel?.name ?? "Standard",
+    amount: Math.round(parseFloat(chosenRate.amount) * 100),
+    matchedExactly: Boolean(exactMatch),
+  };
 }
 
 /**

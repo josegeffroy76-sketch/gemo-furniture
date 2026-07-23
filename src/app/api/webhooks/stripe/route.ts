@@ -32,6 +32,14 @@ export async function POST(request: Request) {
 
     try {
       const lineItems = await stripe.checkout.sessions.listLineItems(session.id, { limit: 100 });
+      const metadata = session.metadata ?? {};
+
+      let cartLines: { productId: string; quantity: number }[] = [];
+      try {
+        cartLines = metadata.cartLines ? JSON.parse(metadata.cartLines) : [];
+      } catch (err) {
+        console.error("Couldn't parse cartLines metadata:", err);
+      }
 
       await saveOrder({
         id: session.id,
@@ -45,6 +53,10 @@ export async function POST(request: Request) {
           quantity: li.quantity ?? 1,
           amount: li.amount_total ?? 0,
         })),
+        lines: cartLines,
+        shippingCarrier: metadata.shippingCarrier ?? null,
+        shippingServiceLevel: metadata.shippingServiceLevel ?? null,
+        shippingAmount: metadata.shippingAmount ? Number(metadata.shippingAmount) : null,
         shippingAddress: session.customer_details?.address
           ? {
               line1: session.customer_details.address.line1,
@@ -56,6 +68,7 @@ export async function POST(request: Request) {
             }
           : null,
         status: "paid",
+        label: null,
       });
 
       revalidatePath("/admin/orders");
