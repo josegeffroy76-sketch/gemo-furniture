@@ -6,6 +6,13 @@ import type { Product, ProductCategory } from "@/lib/types";
 import { CATEGORIES } from "@/lib/categories";
 import { formatPrice } from "@/lib/format";
 
+/** Form representation of an extra shipping box (see Product.extraShipBoxes). */
+type ExtraBoxField = { weightLbs: string; lengthIn: string; widthIn: string; heightIn: string };
+
+function emptyExtraBox(): ExtraBoxField {
+  return { weightLbs: "", lengthIn: "", widthIn: "", heightIn: "" };
+}
+
 const emptyForm = {
   name: "",
   category: "accent-decor" as ProductCategory,
@@ -18,6 +25,7 @@ const emptyForm = {
   shipLengthIn: "",
   shipWidthIn: "",
   shipHeightIn: "",
+  extraShipBoxes: [] as ExtraBoxField[],
   stock: "",
 };
 
@@ -33,6 +41,7 @@ type EditableFields = {
   shipLengthIn: string;
   shipWidthIn: string;
   shipHeightIn: string;
+  extraShipBoxes: ExtraBoxField[];
   stock: string;
 };
 
@@ -63,6 +72,18 @@ async function parseJsonResponse<T>(res: Response): Promise<{ data: T | null; er
   }
 }
 
+/** Converts extra-box form fields to the numeric shape the API expects, dropping incomplete rows. */
+function parseExtraBoxes(boxes: ExtraBoxField[]) {
+  return boxes
+    .filter((b) => b.lengthIn && b.widthIn && b.heightIn)
+    .map((b) => ({
+      weightLbs: parseFloat(b.weightLbs) || 0,
+      lengthIn: parseFloat(b.lengthIn) || 0,
+      widthIn: parseFloat(b.widthIn) || 0,
+      heightIn: parseFloat(b.heightIn) || 0,
+    }));
+}
+
 function toEditableFields(p: Product): EditableFields {
   return {
     name: p.name,
@@ -76,8 +97,151 @@ function toEditableFields(p: Product): EditableFields {
     shipLengthIn: p.shipLengthIn ? String(p.shipLengthIn) : "",
     shipWidthIn: p.shipWidthIn ? String(p.shipWidthIn) : "",
     shipHeightIn: p.shipHeightIn ? String(p.shipHeightIn) : "",
+    extraShipBoxes: (p.extraShipBoxes ?? []).map((b) => ({
+      weightLbs: String(b.weightLbs),
+      lengthIn: String(b.lengthIn),
+      widthIn: String(b.widthIn),
+      heightIn: String(b.heightIn),
+    })),
     stock: String(p.stock),
   };
+}
+
+/** A single labeled number input — used so it's always obvious which value goes where. */
+function LabeledNumberInput({
+  label,
+  value,
+  onChange,
+  step,
+  required,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  step?: string;
+  required?: boolean;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-[11px] font-medium text-ink-soft">{label}</span>
+      <input
+        type="number"
+        step={step ?? "1"}
+        required={required}
+        className="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </label>
+  );
+}
+
+/** Labeled Weight/Length/Width/Height group for one shipping box. */
+function ShipBoxFieldset({
+  legend,
+  box,
+  onChange,
+  onRemove,
+}: {
+  legend: string;
+  box: ExtraBoxField;
+  onChange: (box: ExtraBoxField) => void;
+  onRemove?: () => void;
+}) {
+  return (
+    <div className="col-span-2 rounded-lg border border-line/70 bg-sand/40 p-3">
+      <div className="mb-2 flex items-center justify-between">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-soft">{legend}</p>
+        {onRemove && (
+          <button
+            type="button"
+            onClick={onRemove}
+            className="text-[11px] font-semibold text-brand-700 hover:underline"
+          >
+            Remove this box
+          </button>
+        )}
+      </div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <LabeledNumberInput
+          label="Weight (lb)"
+          step="0.1"
+          value={box.weightLbs}
+          onChange={(v) => onChange({ ...box, weightLbs: v })}
+        />
+        <LabeledNumberInput
+          label="Length (in)"
+          step="0.1"
+          value={box.lengthIn}
+          onChange={(v) => onChange({ ...box, lengthIn: v })}
+        />
+        <LabeledNumberInput
+          label="Width (in)"
+          step="0.1"
+          value={box.widthIn}
+          onChange={(v) => onChange({ ...box, widthIn: v })}
+        />
+        <LabeledNumberInput
+          label="Height (in)"
+          step="0.1"
+          value={box.heightIn}
+          onChange={(v) => onChange({ ...box, heightIn: v })}
+        />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Checkbox + expanding list for a product that ships in more than one box
+ * (e.g. a sectional sofa shipped as a separate seat box and chaise box).
+ * Box 1 (weight + dimensions) always stays in the fields above this — this
+ * component only manages boxes 2+. Purely a form/data-shape concern: it
+ * doesn't touch how Shippo is called (see buildParcelsFromCart in
+ * src/lib/shippo.ts), so nothing about the Shippo setup changes.
+ */
+function ExtraBoxesEditor({
+  boxes,
+  onChange,
+}: {
+  boxes: ExtraBoxField[];
+  onChange: (boxes: ExtraBoxField[]) => void;
+}) {
+  const multiBox = boxes.length > 0;
+
+  return (
+    <div className="col-span-2 flex flex-col gap-3">
+      <label className="flex items-center gap-2 text-xs font-medium text-ink">
+        <input
+          type="checkbox"
+          checked={multiBox}
+          onChange={(e) => onChange(e.target.checked ? [emptyExtraBox()] : [])}
+          className="h-4 w-4 rounded border-line"
+        />
+        This item ships in more than one box
+      </label>
+
+      {boxes.map((box, i) => (
+        <ShipBoxFieldset
+          key={i}
+          legend={`Shipping box ${i + 2}`}
+          box={box}
+          onChange={(next) => onChange(boxes.map((b, idx) => (idx === i ? next : b)))}
+          onRemove={() => onChange(boxes.filter((_, idx) => idx !== i))}
+        />
+      ))}
+
+      {multiBox && (
+        <button
+          type="button"
+          onClick={() => onChange([...boxes, emptyExtraBox()])}
+          className="self-start text-[11px] font-semibold text-brand-700 hover:underline"
+        >
+          + Add another box
+        </button>
+      )}
+    </div>
+  );
 }
 
 export default function AdminProductsPage() {
@@ -135,6 +299,7 @@ export default function AdminProductsPage() {
           shipLengthIn: form.shipLengthIn ? parseFloat(form.shipLengthIn) : undefined,
           shipWidthIn: form.shipWidthIn ? parseFloat(form.shipWidthIn) : undefined,
           shipHeightIn: form.shipHeightIn ? parseFloat(form.shipHeightIn) : undefined,
+          extraShipBoxes: parseExtraBoxes(form.extraShipBoxes),
           stock: parseInt(form.stock, 10) || 0,
         }),
       });
@@ -222,43 +387,44 @@ export default function AdminProductsPage() {
             value={form.dimensions}
             onChange={(e) => setForm({ ...form, dimensions: e.target.value })}
           />
-          <input
-            type="number"
-            placeholder="Weight (lb)"
-            className="rounded-lg border border-line px-3 py-2 text-sm"
+          <LabeledNumberInput
+            label="Weight (lb)"
             value={form.weightLbs}
-            onChange={(e) => setForm({ ...form, weightLbs: e.target.value })}
+            onChange={(v) => setForm({ ...form, weightLbs: v })}
           />
-          <div className="col-span-2 grid grid-cols-3 gap-3">
-            <input
-              type="number"
-              step="0.1"
-              placeholder="Ship box — Length (in)"
-              className="rounded-lg border border-line px-3 py-2 text-sm"
-              value={form.shipLengthIn}
-              onChange={(e) => setForm({ ...form, shipLengthIn: e.target.value })}
-            />
-            <input
-              type="number"
-              step="0.1"
-              placeholder="Ship box — Width (in)"
-              className="rounded-lg border border-line px-3 py-2 text-sm"
-              value={form.shipWidthIn}
-              onChange={(e) => setForm({ ...form, shipWidthIn: e.target.value })}
-            />
-            <input
-              type="number"
-              step="0.1"
-              placeholder="Ship box — Height (in)"
-              className="rounded-lg border border-line px-3 py-2 text-sm"
-              value={form.shipHeightIn}
-              onChange={(e) => setForm({ ...form, shipHeightIn: e.target.value })}
-            />
+          <div className="col-span-2 rounded-lg border border-line/70 bg-sand/40 p-3">
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-ink-soft">
+              Shipping box 1{form.extraShipBoxes.length > 0 ? " (primary)" : ""}
+            </p>
+            <div className="grid grid-cols-3 gap-3">
+              <LabeledNumberInput
+                label="Length (in)"
+                step="0.1"
+                value={form.shipLengthIn}
+                onChange={(v) => setForm({ ...form, shipLengthIn: v })}
+              />
+              <LabeledNumberInput
+                label="Width (in)"
+                step="0.1"
+                value={form.shipWidthIn}
+                onChange={(v) => setForm({ ...form, shipWidthIn: v })}
+              />
+              <LabeledNumberInput
+                label="Height (in)"
+                step="0.1"
+                value={form.shipHeightIn}
+                onChange={(v) => setForm({ ...form, shipHeightIn: v })}
+              />
+            </div>
+            <p className="mt-2 text-[11px] text-ink-soft/70">
+              Real packed-box dimensions, using the Weight (lb) field above as this box&apos;s
+              weight. Leave blank to use a generic small-box estimate.
+            </p>
           </div>
-          <p className="col-span-2 -mt-1.5 text-[11px] text-ink-soft/70">
-            Real packed-box dimensions used for live shipping quotes. Leave blank to use a
-            generic small-box estimate for this product.
-          </p>
+          <ExtraBoxesEditor
+            boxes={form.extraShipBoxes}
+            onChange={(boxes) => setForm({ ...form, extraShipBoxes: boxes })}
+          />
           <input
             required
             placeholder="Short description"
@@ -468,6 +634,7 @@ function EditProductPanel({
           shipLengthIn: fields.shipLengthIn ? parseFloat(fields.shipLengthIn) : undefined,
           shipWidthIn: fields.shipWidthIn ? parseFloat(fields.shipWidthIn) : undefined,
           shipHeightIn: fields.shipHeightIn ? parseFloat(fields.shipHeightIn) : undefined,
+          extraShipBoxes: parseExtraBoxes(fields.extraShipBoxes),
           stock: parseInt(fields.stock, 10) || 0,
         }),
       });
@@ -569,43 +736,45 @@ function EditProductPanel({
           onChange={(e) => setFields({ ...fields, dimensions: e.target.value })}
           placeholder="Dimensions"
         />
-        <input
-          type="number"
-          className="rounded-lg border border-line px-3 py-2 text-sm"
+        <LabeledNumberInput
+          label="Weight (lb)"
           value={fields.weightLbs}
-          onChange={(e) => setFields({ ...fields, weightLbs: e.target.value })}
-          placeholder="Weight (lb)"
+          onChange={(v) => setFields({ ...fields, weightLbs: v })}
         />
-        <div className="col-span-2 grid grid-cols-3 gap-3">
-          <input
-            type="number"
-            step="0.1"
-            className="rounded-lg border border-line px-3 py-2 text-sm"
-            value={fields.shipLengthIn}
-            onChange={(e) => setFields({ ...fields, shipLengthIn: e.target.value })}
-            placeholder="Ship box — Length (in)"
-          />
-          <input
-            type="number"
-            step="0.1"
-            className="rounded-lg border border-line px-3 py-2 text-sm"
-            value={fields.shipWidthIn}
-            onChange={(e) => setFields({ ...fields, shipWidthIn: e.target.value })}
-            placeholder="Ship box — Width (in)"
-          />
-          <input
-            type="number"
-            step="0.1"
-            className="rounded-lg border border-line px-3 py-2 text-sm"
-            value={fields.shipHeightIn}
-            onChange={(e) => setFields({ ...fields, shipHeightIn: e.target.value })}
-            placeholder="Ship box — Height (in)"
-          />
+        <div className="col-span-2 rounded-lg border border-line/70 bg-sand/40 p-3">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-ink-soft">
+            Shipping box 1{fields.extraShipBoxes.length > 0 ? " (primary)" : ""}
+          </p>
+          <div className="grid grid-cols-3 gap-3">
+            <LabeledNumberInput
+              label="Length (in)"
+              step="0.1"
+              value={fields.shipLengthIn}
+              onChange={(v) => setFields({ ...fields, shipLengthIn: v })}
+            />
+            <LabeledNumberInput
+              label="Width (in)"
+              step="0.1"
+              value={fields.shipWidthIn}
+              onChange={(v) => setFields({ ...fields, shipWidthIn: v })}
+            />
+            <LabeledNumberInput
+              label="Height (in)"
+              step="0.1"
+              value={fields.shipHeightIn}
+              onChange={(v) => setFields({ ...fields, shipHeightIn: v })}
+            />
+          </div>
+          <p className="mt-2 text-[11px] text-ink-soft/70">
+            Real packed-box dimensions, using the Weight (lb) field above as this box&apos;s
+            weight — not the assembled size shown above. Leave blank to use a generic
+            small-box estimate.
+          </p>
         </div>
-        <p className="col-span-2 -mt-1.5 text-[11px] text-ink-soft/70">
-          Real packed-box dimensions used for live shipping quotes — not the assembled size
-          above. Leave blank to use a generic small-box estimate.
-        </p>
+        <ExtraBoxesEditor
+          boxes={fields.extraShipBoxes}
+          onChange={(boxes) => setFields({ ...fields, extraShipBoxes: boxes })}
+        />
         <input
           className="col-span-2 rounded-lg border border-line px-3 py-2 text-sm"
           value={fields.shortDescription}

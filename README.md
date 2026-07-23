@@ -106,14 +106,26 @@ Until `SHIPPO_API_TOKEN` is set, checkout uses a transparent flat-rate
 estimate (clearly labeled as an estimate) so the flow is fully testable.
 
 Each product can have real packed-box dimensions (`shipLengthIn` /
-`shipWidthIn` / `shipHeightIn`, in inches) set on it via the **Edit** panel
-in `/admin/products` — Shippo then rates one parcel per cart unit using that
+`shipWidthIn` / `shipHeightIn`, in inches, plus the existing `weightLbs`
+field as that box's weight) set on it via the **Edit** panel in
+`/admin/products` — Shippo then rates one parcel per cart unit using that
 product's real size and weight (see `buildParcelsFromCart` in
 `src/lib/shippo.ts`). Set these for every real product before launch: a
 missing/generic box size is what caused wildly inflated, UPS-only quotes
 during testing — an oversized box racks up "dimensional weight" charges,
 and USPS/FedEx Ground reject oversized packages outright rather than quote
 them, leaving only freight-capable carriers like UPS to respond.
+
+Every field in the admin panel's shipping section is now individually
+labeled (Weight, Length, Width, Height) so it's clear what goes where. For
+products that ship in more than one physical box (e.g. a sectional with a
+separate chaise box), check **"This item ships in more than one box"** to
+reveal a full Weight/Length/Width/Height set for box 2, with an
+**"Add another box"** link for a 3rd, 4th, etc. Each extra box is stored on
+the product as `extraShipBoxes` and quoted as its own parcel in the same
+Shippo shipment request — this only changes what's included in the
+existing `parcels` array Shippo already receives, so it doesn't require any
+changes to your Shippo account setup.
 
 ## Address autocomplete (Google Places)
 

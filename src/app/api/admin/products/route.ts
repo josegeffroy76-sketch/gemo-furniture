@@ -28,6 +28,16 @@ const newProductSchema = z.object({
   shipLengthIn: z.number().min(0).optional(),
   shipWidthIn: z.number().min(0).optional(),
   shipHeightIn: z.number().min(0).optional(),
+  extraShipBoxes: z
+    .array(
+      z.object({
+        weightLbs: z.number().min(0),
+        lengthIn: z.number().min(0),
+        widthIn: z.number().min(0),
+        heightIn: z.number().min(0),
+      })
+    )
+    .optional(),
   images: z.array(z.string().url()).optional(),
   stock: z.number().int().min(0),
 });

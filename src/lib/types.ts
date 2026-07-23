@@ -39,6 +39,13 @@ export interface Product {
   shipLengthIn?: number;
   shipWidthIn?: number;
   shipHeightIn?: number;
+  // Extra boxes for items that ship in more than one package (e.g. a
+  // sectional sofa with a separate chaise box, or a bed frame with a
+  // separate headboard box). Box 1 is always the fields above (weightLbs +
+  // shipLengthIn/Width/Height); each entry here is an additional box quoted
+  // as its own parcel in the same Shippo shipment request — see
+  // buildParcelsFromCart in src/lib/shippo.ts.
+  extraShipBoxes?: ShipBox[];
   icon: ProductIcon;
   colorway: string; // hex used for the placeholder art tint
   images?: string[]; // uploaded product photo URLs (Vercel Blob) — falls back to the icon placeholder when empty
@@ -46,6 +53,13 @@ export interface Product {
   bestseller?: boolean;
   newArrival?: boolean;
   hidden?: boolean;
+}
+
+export interface ShipBox {
+  weightLbs: number;
+  lengthIn: number;
+  widthIn: number;
+  heightIn: number;
 }
 
 export interface CartLine {

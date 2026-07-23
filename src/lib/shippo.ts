@@ -57,7 +57,12 @@ const MAX_PARCELS_PER_SHIPMENT = 20; // safety cap on the Shippo request size
 
 /**
  * Builds one parcel per cart unit (not one shared box for the whole cart),
- * using each product's own real ship dimensions + weight when set.
+ * using each product's own real ship dimensions + weight when set. Items
+ * that ship in more than one box (product.extraShipBoxes) contribute one
+ * additional parcel per extra box, per unit — Shippo shipments already
+ * support quoting/purchasing a multi-parcel shipment as a single request,
+ * so this only changes what we send in the existing `parcels` array, not
+ * how we call Shippo.
  */
 function buildParcelsFromCart(items: { product: Product; quantity: number }[]): ShippoParcel[] {
   const parcels: ShippoParcel[] = [];
@@ -65,20 +70,37 @@ function buildParcelsFromCart(items: { product: Product; quantity: number }[]): 
     const hasRealDimensions = Boolean(
       product.shipLengthIn && product.shipWidthIn && product.shipHeightIn
     );
-    const box = hasRealDimensions
+    const primaryBox = hasRealDimensions
       ? { length: product.shipLengthIn!, width: product.shipWidthIn!, height: product.shipHeightIn! }
       : FALLBACK_BOX;
-    const perUnitWeight = Math.max(product.weightLbs || 1, 1);
+    const primaryWeight = Math.max(product.weightLbs || 1, 1);
 
-    for (let i = 0; i < quantity && parcels.length < MAX_PARCELS_PER_SHIPMENT; i++) {
-      parcels.push({
-        massUnit: "lb",
-        weight: String(perUnitWeight),
-        distanceUnit: "in",
-        height: String(box.height),
-        length: String(box.length),
-        width: String(box.width),
-      });
+    const extraBoxes = (product.extraShipBoxes ?? [])
+      .filter((b) => b.lengthIn && b.widthIn && b.heightIn)
+      .map((b) => ({
+        length: b.lengthIn,
+        width: b.widthIn,
+        height: b.heightIn,
+        weight: Math.max(b.weightLbs || 1, 1),
+      }));
+
+    const boxesPerUnit = [
+      { length: primaryBox.length, width: primaryBox.width, height: primaryBox.height, weight: primaryWeight },
+      ...extraBoxes,
+    ];
+
+    for (let i = 0; i < quantity; i++) {
+      for (const box of boxesPerUnit) {
+        if (parcels.length >= MAX_PARCELS_PER_SHIPMENT) break;
+        parcels.push({
+          massUnit: "lb",
+          weight: String(box.weight),
+          distanceUnit: "in",
+          height: String(box.height),
+          length: String(box.length),
+          width: String(box.width),
+        });
+      }
     }
   }
   return parcels;
