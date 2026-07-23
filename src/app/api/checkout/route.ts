@@ -40,6 +40,20 @@ function safeCartLinesMetadata(lines: { productId: string; quantity: number }[])
   return "[]";
 }
 
+/**
+ * Stripe's own `customer_details.address` on the Checkout Session is only
+ * populated if billing/shipping address collection is explicitly enabled on
+ * the session — since we collect the address ourselves on our own shipping
+ * page instead, that field comes back empty. Store the address we actually
+ * collected in metadata so the webhook can read the real thing back.
+ */
+function safeAddressMetadata(address: z.infer<typeof bodySchema>["address"]): string {
+  const json = JSON.stringify(address);
+  if (json.length <= 480) return json;
+  console.warn(`Address too large to fit in Stripe metadata (${json.length} chars).`);
+  return "";
+}
+
 export async function POST(request: Request) {
   if (!isStripeConfigured()) {
     return NextResponse.json(
@@ -133,6 +147,7 @@ export async function POST(request: Request) {
         // itself expires after a few days). Falls back to an empty array
         // for unusually large carts rather than erroring the checkout.
         cartLines: safeCartLinesMetadata(lines),
+        shippingAddress: safeAddressMetadata(address),
       },
     });
 

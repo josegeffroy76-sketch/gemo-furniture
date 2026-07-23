@@ -41,11 +41,31 @@ export async function POST(request: Request) {
         console.error("Couldn't parse cartLines metadata:", err);
       }
 
+      // Stripe's own customer_details.address is only populated if
+      // billing/shipping address collection is explicitly enabled on the
+      // Checkout Session — since the address is collected on our own
+      // shipping page instead, read back what we stored in metadata.
+      let checkoutAddress: {
+        name?: string;
+        street1?: string;
+        street2?: string;
+        city?: string;
+        state?: string;
+        zip?: string;
+        country?: string;
+        email?: string;
+      } | null = null;
+      try {
+        checkoutAddress = metadata.shippingAddress ? JSON.parse(metadata.shippingAddress) : null;
+      } catch (err) {
+        console.error("Couldn't parse shippingAddress metadata:", err);
+      }
+
       await saveOrder({
         id: session.id,
         createdAt: new Date(session.created * 1000).toISOString(),
-        customerEmail: session.customer_details?.email ?? null,
-        customerName: session.customer_details?.name ?? null,
+        customerEmail: session.customer_details?.email ?? checkoutAddress?.email ?? null,
+        customerName: session.customer_details?.name ?? checkoutAddress?.name ?? null,
         amountTotal: session.amount_total ?? 0,
         currency: session.currency ?? "usd",
         items: lineItems.data.map((li) => ({
@@ -57,14 +77,14 @@ export async function POST(request: Request) {
         shippingCarrier: metadata.shippingCarrier ?? null,
         shippingServiceLevel: metadata.shippingServiceLevel ?? null,
         shippingAmount: metadata.shippingAmount ? Number(metadata.shippingAmount) : null,
-        shippingAddress: session.customer_details?.address
+        shippingAddress: checkoutAddress
           ? {
-              line1: session.customer_details.address.line1,
-              line2: session.customer_details.address.line2,
-              city: session.customer_details.address.city,
-              state: session.customer_details.address.state,
-              postalCode: session.customer_details.address.postal_code,
-              country: session.customer_details.address.country,
+              line1: checkoutAddress.street1 ?? null,
+              line2: checkoutAddress.street2 ?? null,
+              city: checkoutAddress.city ?? null,
+              state: checkoutAddress.state ?? null,
+              postalCode: checkoutAddress.zip ?? null,
+              country: checkoutAddress.country ?? null,
             }
           : null,
         status: "paid",
