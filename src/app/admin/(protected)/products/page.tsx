@@ -136,6 +136,100 @@ function LabeledNumberInput({
   );
 }
 
+/** Generic labeled text input — pairs with LabeledNumberInput for non-numeric fields. */
+function LabeledInput({
+  label,
+  value,
+  onChange,
+  placeholder,
+  required,
+  className,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  required?: boolean;
+  className?: string;
+}) {
+  return (
+    <label className={className ?? "block"}>
+      <span className="mb-1 block text-[11px] font-medium text-ink-soft">{label}</span>
+      <input
+        type="text"
+        required={required}
+        placeholder={placeholder}
+        className="w-full rounded-lg border border-line px-3 py-2 text-sm"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </label>
+  );
+}
+
+/** Generic labeled select — used for Category so it reads the same as the other fields. */
+function LabeledSelect({
+  label,
+  value,
+  onChange,
+  children,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-[11px] font-medium text-ink-soft">{label}</span>
+      <select
+        className="w-full rounded-lg border border-line px-3 py-2 text-sm"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        {children}
+      </select>
+    </label>
+  );
+}
+
+/** Generic labeled textarea. */
+function LabeledTextarea({
+  label,
+  value,
+  onChange,
+  placeholder,
+  rows,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  rows?: number;
+}) {
+  return (
+    <label className="col-span-2 block">
+      <span className="mb-1 block text-[11px] font-medium text-ink-soft">{label}</span>
+      <textarea
+        placeholder={placeholder}
+        rows={rows}
+        className="w-full rounded-lg border border-line px-3 py-2 text-sm"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </label>
+  );
+}
+
+/** Groups related fields under a visible heading so, e.g., Stock and Weight never sit ambiguously next to each other. */
+function FormSectionHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <h3 className="col-span-2 border-b border-line pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-ink first:pt-0">
+      {children}
+    </h3>
+  );
+}
+
 /** Labeled Weight/Length/Width/Height group for one shipping box. */
 function ShipBoxFieldset({
   legend,
@@ -338,55 +432,54 @@ export default function AdminProductsPage() {
           onSubmit={handleAddProduct}
           className="mt-5 grid grid-cols-2 gap-3 rounded-xl border border-line bg-white/60 p-5"
         >
-          <input
+          <FormSectionHeading>General</FormSectionHeading>
+          <LabeledInput
             required
-            placeholder="Product name"
-            className="col-span-2 rounded-lg border border-line px-3 py-2 text-sm sm:col-span-1"
+            label="Product name"
+            className="col-span-2 block sm:col-span-1"
             value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            onChange={(v) => setForm({ ...form, name: v })}
           />
-          <select
-            className="rounded-lg border border-line px-3 py-2 text-sm"
+          <LabeledSelect
+            label="Category"
             value={form.category}
-            onChange={(e) => setForm({ ...form, category: e.target.value as ProductCategory })}
+            onChange={(v) => setForm({ ...form, category: v as ProductCategory })}
           >
             {CATEGORIES.map((c) => (
               <option key={c.slug} value={c.slug}>
                 {c.label}
               </option>
             ))}
-          </select>
-          <input
+          </LabeledSelect>
+
+          <FormSectionHeading>Price &amp; inventory</FormSectionHeading>
+          <LabeledNumberInput
             required
-            type="number"
+            label="Price (USD)"
             step="0.01"
-            placeholder="Price (USD)"
-            className="rounded-lg border border-line px-3 py-2 text-sm"
             value={form.price}
-            onChange={(e) => setForm({ ...form, price: e.target.value })}
+            onChange={(v) => setForm({ ...form, price: v })}
           />
-          <input
-            type="number"
+          <LabeledNumberInput
+            label="Compare-at price (optional)"
             step="0.01"
-            placeholder="Compare-at price (optional)"
-            className="rounded-lg border border-line px-3 py-2 text-sm"
             value={form.compareAtPrice}
-            onChange={(e) => setForm({ ...form, compareAtPrice: e.target.value })}
+            onChange={(v) => setForm({ ...form, compareAtPrice: v })}
           />
-          <input
+          <LabeledNumberInput
             required
-            type="number"
-            placeholder="Stock"
-            className="rounded-lg border border-line px-3 py-2 text-sm"
+            label="Stock"
             value={form.stock}
-            onChange={(e) => setForm({ ...form, stock: e.target.value })}
+            onChange={(v) => setForm({ ...form, stock: v })}
           />
-          <input
-            placeholder="Dimensions (e.g. 60&quot;W x 30&quot;D x 32&quot;H)"
-            className="rounded-lg border border-line px-3 py-2 text-sm"
+          <LabeledInput
+            label="Assembled dimensions"
+            placeholder="e.g. 60&quot;W x 30&quot;D x 32&quot;H"
             value={form.dimensions}
-            onChange={(e) => setForm({ ...form, dimensions: e.target.value })}
+            onChange={(v) => setForm({ ...form, dimensions: v })}
           />
+
+          <FormSectionHeading>Shipping</FormSectionHeading>
           <LabeledNumberInput
             label="Weight (lb)"
             value={form.weightLbs}
@@ -425,19 +518,20 @@ export default function AdminProductsPage() {
             boxes={form.extraShipBoxes}
             onChange={(boxes) => setForm({ ...form, extraShipBoxes: boxes })}
           />
-          <input
+
+          <FormSectionHeading>Description</FormSectionHeading>
+          <LabeledInput
             required
-            placeholder="Short description"
-            className="col-span-2 rounded-lg border border-line px-3 py-2 text-sm"
+            label="Short description"
+            className="col-span-2 block"
             value={form.shortDescription}
-            onChange={(e) => setForm({ ...form, shortDescription: e.target.value })}
+            onChange={(v) => setForm({ ...form, shortDescription: v })}
           />
-          <textarea
-            placeholder="Full description (optional — defaults to short description)"
-            className="col-span-2 rounded-lg border border-line px-3 py-2 text-sm"
+          <LabeledTextarea
+            label="Full description (optional — defaults to short description)"
             rows={2}
             value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            onChange={(v) => setForm({ ...form, description: v })}
           />
           {error && <p className="col-span-2 text-xs text-brand-700">{error}</p>}
           <button
@@ -690,52 +784,50 @@ function EditProductPanel({
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <input
-          className="col-span-2 rounded-lg border border-line px-3 py-2 text-sm sm:col-span-1"
+        <FormSectionHeading>General</FormSectionHeading>
+        <LabeledInput
+          label="Product name"
+          className="col-span-2 block sm:col-span-1"
           value={fields.name}
-          onChange={(e) => setFields({ ...fields, name: e.target.value })}
-          placeholder="Product name"
+          onChange={(v) => setFields({ ...fields, name: v })}
         />
-        <select
-          className="rounded-lg border border-line px-3 py-2 text-sm"
+        <LabeledSelect
+          label="Category"
           value={fields.category}
-          onChange={(e) => setFields({ ...fields, category: e.target.value as ProductCategory })}
+          onChange={(v) => setFields({ ...fields, category: v as ProductCategory })}
         >
           {CATEGORIES.map((c) => (
             <option key={c.slug} value={c.slug}>
               {c.label}
             </option>
           ))}
-        </select>
-        <input
-          type="number"
+        </LabeledSelect>
+
+        <FormSectionHeading>Price &amp; inventory</FormSectionHeading>
+        <LabeledNumberInput
+          label="Price (USD)"
           step="0.01"
-          className="rounded-lg border border-line px-3 py-2 text-sm"
           value={fields.price}
-          onChange={(e) => setFields({ ...fields, price: e.target.value })}
-          placeholder="Price (USD)"
+          onChange={(v) => setFields({ ...fields, price: v })}
         />
-        <input
-          type="number"
+        <LabeledNumberInput
+          label="Compare-at price (optional)"
           step="0.01"
-          className="rounded-lg border border-line px-3 py-2 text-sm"
           value={fields.compareAtPrice}
-          onChange={(e) => setFields({ ...fields, compareAtPrice: e.target.value })}
-          placeholder="Compare-at price (optional)"
+          onChange={(v) => setFields({ ...fields, compareAtPrice: v })}
         />
-        <input
-          type="number"
-          className="rounded-lg border border-line px-3 py-2 text-sm"
+        <LabeledNumberInput
+          label="Stock"
           value={fields.stock}
-          onChange={(e) => setFields({ ...fields, stock: e.target.value })}
-          placeholder="Stock"
+          onChange={(v) => setFields({ ...fields, stock: v })}
         />
-        <input
-          className="rounded-lg border border-line px-3 py-2 text-sm"
+        <LabeledInput
+          label="Assembled dimensions"
           value={fields.dimensions}
-          onChange={(e) => setFields({ ...fields, dimensions: e.target.value })}
-          placeholder="Dimensions"
+          onChange={(v) => setFields({ ...fields, dimensions: v })}
         />
+
+        <FormSectionHeading>Shipping</FormSectionHeading>
         <LabeledNumberInput
           label="Weight (lb)"
           value={fields.weightLbs}
@@ -775,18 +867,19 @@ function EditProductPanel({
           boxes={fields.extraShipBoxes}
           onChange={(boxes) => setFields({ ...fields, extraShipBoxes: boxes })}
         />
-        <input
-          className="col-span-2 rounded-lg border border-line px-3 py-2 text-sm"
+
+        <FormSectionHeading>Description</FormSectionHeading>
+        <LabeledInput
+          label="Short description"
+          className="col-span-2 block"
           value={fields.shortDescription}
-          onChange={(e) => setFields({ ...fields, shortDescription: e.target.value })}
-          placeholder="Short description"
+          onChange={(v) => setFields({ ...fields, shortDescription: v })}
         />
-        <textarea
-          className="col-span-2 rounded-lg border border-line px-3 py-2 text-sm"
+        <LabeledTextarea
+          label="Full description"
           rows={3}
           value={fields.description}
-          onChange={(e) => setFields({ ...fields, description: e.target.value })}
-          placeholder="Full description"
+          onChange={(v) => setFields({ ...fields, description: v })}
         />
 
         {error && <p className="col-span-2 text-xs text-brand-700">{error}</p>}
