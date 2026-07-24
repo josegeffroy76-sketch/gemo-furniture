@@ -67,6 +67,16 @@ export interface CartLine {
   quantity: number;
 }
 
+export interface ProductReview {
+  id: string;
+  productId: string;
+  orderId: string; // Stripe Checkout Session ID — ties the review to a verified purchase
+  customerName: string;
+  rating: number; // 1-5
+  reviewText: string;
+  createdAt: string; // ISO timestamp
+}
+
 export interface Address {
   name: string;
   street1: string;

@@ -5,8 +5,10 @@ import { ChevronRight, Truck, ShieldCheck, RotateCcw } from "lucide-react";
 import ProductPhoto from "@/components/ProductPhoto";
 import ProductCard from "@/components/ProductCard";
 import AddToCartButton from "@/components/AddToCartButton";
+import ReviewStars from "@/components/ReviewStars";
 import { getAllProducts, getProductBySlug, getProductsByCategory } from "@/lib/products";
 import { getCategoryLabel } from "@/lib/categories";
+import { getReviewSummary, getReviewsForProduct } from "@/lib/reviews-store";
 import { formatPrice, percentOff } from "@/lib/format";
 
 export async function generateStaticParams() {
@@ -41,6 +43,9 @@ export default async function ProductPage({
     .filter((p) => p.id !== product.id)
     .slice(0, 4);
 
+  const reviewSummary = await getReviewSummary(product.id);
+  const reviews = reviewSummary.visible ? await getReviewsForProduct(product.id) : [];
+
   return (
     <div className="container-gemo py-10">
       <nav className="flex items-center gap-1.5 text-xs text-ink-soft">
@@ -69,6 +74,15 @@ export default async function ProductPage({
             </span>
           )}
           <h1 className="font-display text-2xl text-ink md:text-3xl">{product.name}</h1>
+          {reviewSummary.visible && (
+            <div className="mt-2 flex items-center gap-2">
+              <ReviewStars rating={reviewSummary.average} />
+              <span className="text-xs text-ink-soft">
+                {reviewSummary.average.toFixed(1)} · {reviewSummary.count} review
+                {reviewSummary.count === 1 ? "" : "s"}
+              </span>
+            </div>
+          )}
           <p className="mt-3 text-sm leading-relaxed text-ink-soft">{product.shortDescription}</p>
 
           <div className="mt-5 flex items-baseline gap-3">
@@ -126,6 +140,32 @@ export default async function ProductPage({
           </div>
         </div>
       </div>
+
+      {reviewSummary.visible && (
+        <section className="mt-16 border-t border-line pt-10">
+          <h2 className="font-display text-xl text-ink">Customer reviews</h2>
+          <div className="mt-2 flex items-center gap-2">
+            <ReviewStars rating={reviewSummary.average} size={18} />
+            <span className="text-sm text-ink-soft">
+              {reviewSummary.average.toFixed(1)} out of 5 · {reviewSummary.count} reviews
+            </span>
+          </div>
+          <div className="mt-6 grid gap-5 sm:grid-cols-2">
+            {reviews.map((r) => (
+              <div key={r.id} className="rounded-xl border border-line bg-white/60 p-4">
+                <div className="flex items-center justify-between">
+                  <ReviewStars rating={r.rating} size={14} />
+                  <span className="text-[11px] text-ink-soft/70">
+                    {new Date(r.createdAt).toLocaleDateString("en-US")}
+                  </span>
+                </div>
+                {r.reviewText && <p className="mt-2 text-sm text-ink-soft">{r.reviewText}</p>}
+                <p className="mt-2 text-xs font-medium text-ink">{r.customerName}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {related.length > 0 && (
         <section className="mt-16">

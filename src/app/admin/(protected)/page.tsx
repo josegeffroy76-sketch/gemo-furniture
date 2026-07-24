@@ -1,12 +1,17 @@
 import Link from "next/link";
 import { getAllProducts } from "@/lib/products";
 import { getOrders } from "@/lib/orders-store";
+import { getReviews } from "@/lib/reviews-store";
 import { formatPrice } from "@/lib/format";
 import { isStripeConfigured } from "@/lib/stripe";
 import { isShippoConfigured } from "@/lib/shippo";
 
 export default async function AdminDashboardPage() {
-  const [products, orders] = await Promise.all([getAllProducts(), getOrders()]);
+  const [products, orders, reviews] = await Promise.all([
+    getAllProducts(),
+    getOrders(),
+    getReviews(),
+  ]);
   const revenue = orders.reduce((sum, o) => sum + o.amountTotal, 0);
   const lowStock = products.filter((p) => p.stock <= 5);
 
@@ -15,19 +20,35 @@ export default async function AdminDashboardPage() {
     { label: "Orders received", value: orders.length },
     { label: "Total revenue", value: formatPrice(revenue) },
     { label: "Low stock (≤5)", value: lowStock.length },
+    { label: "Reviews collected", value: reviews.length, href: "/admin/reviews" },
   ];
 
   return (
     <div>
       <h1 className="font-display text-2xl text-ink">Dashboard</h1>
 
-      <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {stats.map((s) => (
-          <div key={s.label} className="rounded-xl border border-line bg-white/60 p-5">
-            <p className="text-2xl font-semibold text-ink">{s.value}</p>
-            <p className="mt-1 text-xs text-ink-soft">{s.label}</p>
-          </div>
-        ))}
+      <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-5">
+        {stats.map((s) => {
+          const card = (
+            <>
+              <p className="text-2xl font-semibold text-ink">{s.value}</p>
+              <p className="mt-1 text-xs text-ink-soft">{s.label}</p>
+            </>
+          );
+          return s.href ? (
+            <Link
+              key={s.label}
+              href={s.href}
+              className="rounded-xl border border-line bg-white/60 p-5 transition-colors hover:bg-white"
+            >
+              {card}
+            </Link>
+          ) : (
+            <div key={s.label} className="rounded-xl border border-line bg-white/60 p-5">
+              {card}
+            </div>
+          );
+        })}
       </div>
 
       <div className="mt-8 rounded-xl border border-line bg-white/60 p-5">

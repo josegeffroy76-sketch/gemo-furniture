@@ -89,10 +89,29 @@ Visit `/admin` after setting `ADMIN_PASSWORD` (and optionally
   fresh rate at click time and tries to match the carrier/service the
   customer paid for; if that exact option is no longer available it falls
   back to the cheapest rate and flags the price difference.
+- View every product rating/review as soon as it's submitted, and delete any
+  that shouldn't be public, in `/admin/reviews` — see **Ratings & reviews**
+  below.
 
 This is a single shared admin password, not a multi-user system — good for a
 small team getting started, but plan to move to real user accounts if you add
 staff later.
+
+## Ratings & reviews
+
+After a successful checkout, `/checkout/success` shows a 1-5 star rating +
+optional written review form for each product in that order. Submitting one
+calls `POST /api/reviews`, which verifies the product was genuinely part of a
+paid order (checking the order log, falling back to asking Stripe directly
+if the webhook hasn't logged it yet) before saving — a customer can only
+review a product once per order.
+
+A product's average rating and reviews only appear on its storefront page
+(`/shop/[slug]`) once it has at least 5 reviews (`PUBLIC_REVIEW_THRESHOLD` in
+`src/lib/reviews-store.ts`) — a lone review isn't a meaningful signal yet.
+Admins can see every review immediately, regardless of that threshold, in
+`/admin/reviews`, along with each product's progress toward going public and
+a delete button for any review that shouldn't stay up.
 
 ## Shipping (Shippo)
 
