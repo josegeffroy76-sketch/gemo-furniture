@@ -90,6 +90,7 @@ export async function POST(request: Request) {
           : null,
         status: "paid",
         label: null,
+        reviewRequestSentAt: null,
       });
 
       revalidatePath("/admin/orders");

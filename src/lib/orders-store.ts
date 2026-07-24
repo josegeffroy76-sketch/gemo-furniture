@@ -25,6 +25,9 @@ export interface OrderRecord {
   shippingServiceLevel: string | null;
   shippingAmount: number | null; // cents, what the customer paid for shipping
   taxAmount: number | null; // cents, sales tax collected via Stripe Tax (0/null if not applicable)
+  // ISO timestamp once the "rate your purchase" email has gone out (see
+  // /api/cron/review-requests) — null until then. Prevents sending it twice.
+  reviewRequestSentAt: string | null;
   shippingAddress: {
     line1?: string | null;
     line2?: string | null;

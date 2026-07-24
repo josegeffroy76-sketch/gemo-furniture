@@ -13,18 +13,21 @@ export default function ReviewForm({
   productId,
   productName,
   defaultName,
+  initiallySubmitted = false,
 }: {
   orderId: string;
   productId: string;
   productName: string;
   defaultName: string;
+  /** True when the server already knows this order/product was reviewed — skips straight to the thank-you state. */
+  initiallySubmitted?: boolean;
 }) {
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
   const [customerName, setCustomerName] = useState(defaultName);
   const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted, setSubmitted] = useState(initiallySubmitted);
   const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {

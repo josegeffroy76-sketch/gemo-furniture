@@ -99,12 +99,21 @@ staff later.
 
 ## Ratings & reviews
 
-After a successful checkout, `/checkout/success` shows a 1-5 star rating +
-optional written review form for each product in that order. Submitting one
-calls `POST /api/reviews`, which verifies the product was genuinely part of a
-paid order (checking the order log, falling back to asking Stripe directly
-if the webhook hasn't logged it yet) before saving — a customer can only
-review a product once per order.
+Customers rate and review a product from a link they receive **by email a
+couple weeks after purchase** (`REVIEW_REQUEST_DELAY_DAYS`, default 14) —
+not right at checkout, since nobody can honestly rate furniture they haven't
+received yet. A daily [Vercel Cron job](https://vercel.com/docs/cron-jobs)
+(`src/app/api/cron/review-requests`, scheduled in `vercel.json`) finds paid
+orders past that age that haven't gotten the email yet and sends it via
+[Resend](https://resend.com) — see `.env.example` for `RESEND_API_KEY` /
+`RESEND_FROM_EMAIL`. Without a Resend key, the cron just skips sending
+instead of erroring, so everything else keeps working.
+
+The email links to `/review/[orderId]`, a public page listing every product
+from that order with a 1-5 star + optional written review form. Submitting
+one calls `POST /api/reviews`, which verifies the product was genuinely part
+of that paid order before saving — a customer can only review a product once
+per order.
 
 A product's average rating and reviews only appear on its storefront page
 (`/shop/[slug]`) once it has at least 5 reviews (`PUBLIC_REVIEW_THRESHOLD` in
@@ -112,6 +121,10 @@ A product's average rating and reviews only appear on its storefront page
 Admins can see every review immediately, regardless of that threshold, in
 `/admin/reviews`, along with each product's progress toward going public and
 a delete button for any review that shouldn't stay up.
+
+To test the email locally/manually without waiting for the cron schedule,
+call `GET /api/cron/review-requests` directly (add
+`Authorization: Bearer <CRON_SECRET>` if you've set that env var).
 
 ## Shipping (Shippo)
 
