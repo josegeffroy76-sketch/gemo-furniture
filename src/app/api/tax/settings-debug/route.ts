@@ -14,8 +14,11 @@ export async function GET() {
   }
   try {
     const stripe = getStripe();
-    const settings = await stripe.tax.settings.retrieve();
-    return NextResponse.json(settings);
+    const [settings, registrations] = await Promise.all([
+      stripe.tax.settings.retrieve(),
+      stripe.tax.registrations.list({ limit: 10 }),
+    ]);
+    return NextResponse.json({ settings, registrations: registrations.data });
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : String(err) },
