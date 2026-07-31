@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       return NextResponse.json(registration);
     }
     if (action === "codes") {
-      const code = await stripe.taxCodes.retrieve("txcd_10000000");
+      const code = await stripe.taxCodes.retrieve("txcd_99999999");
       return NextResponse.json(code);
     }
     if (action === "calc") {
