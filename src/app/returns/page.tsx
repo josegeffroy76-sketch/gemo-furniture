@@ -3,7 +3,7 @@ import { LegalDocument, LegalSection } from "@/components/LegalDocument";
 
 export const metadata: Metadata = {
   title: "Return Policy",
-  description: "GEMO Furniture's 30-day return policy — free return shipping, full refund.",
+  description: "GEMO Furniture's 30-day return policy — return shipping and refund details.",
 };
 
 const LIST = "list-disc space-y-1.5 pl-5";
@@ -14,7 +14,8 @@ export default function ReturnPolicyPage() {
       <LegalSection heading="1. 30-Day Returns">
         <p>
           We want you to be happy with your GEMO Furniture purchase. You may return most items
-          within <strong>30 days of delivery</strong> for a full refund.
+          within <strong>30 days of delivery</strong>. Whether return shipping is free depends on
+          the reason for the return — see &quot;Return Shipping&quot; below.
         </p>
       </LegalSection>
 
@@ -43,19 +44,35 @@ export default function ReturnPolicyPage() {
       </LegalSection>
 
       <LegalSection heading="4. Return Shipping">
+        <p>Whether return shipping is free depends on the reason for the return:</p>
+        <ul className={LIST}>
+          <li>
+            <strong>Our error — free return shipping.</strong> If you receive an item that is
+            different from what you ordered, or your order arrives with missing pieces, parts,
+            or hardware, GEMO covers the full cost of return shipping. We will arrange pickup or
+            provide a prepaid return label at no cost to you.
+          </li>
+          <li>
+            <strong>Any other reason — return shipping is at your cost.</strong> For returns not
+            caused by a GEMO error (for example, you changed your mind, the item doesn&apos;t fit
+            your space, or you simply no longer want it), you are responsible for the cost of
+            shipping the item back to us. We can provide a prepaid label and deduct its cost from
+            your refund, or you may arrange your own return shipping.
+          </li>
+        </ul>
         <p>
-          GEMO covers the cost of return shipping for eligible returns started within the 30-day
-          window. We will arrange pickup or provide a prepaid return label — please do not send
-          an item back before we&apos;ve confirmed your return, so we can make sure it&apos;s
-          shipped correctly.
+          Please contact us before sending anything back so we can confirm your return and the
+          shipping arrangement that applies.
         </p>
       </LegalSection>
 
       <LegalSection heading="5. Refunds">
         <p>
           Once we receive and inspect your returned item, we will issue a refund to your original
-          payment method. Please allow 5–10 business days after we receive the return for the
-          refund to appear, depending on your bank or card issuer.
+          payment method for the price paid for the item. If return shipping was your
+          responsibility and we provided a prepaid label, its cost will be deducted from your
+          refund. Please allow 5–10 business days after we receive the return for the refund to
+          appear, depending on your bank or card issuer.
         </p>
       </LegalSection>
 
