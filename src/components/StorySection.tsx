@@ -21,7 +21,7 @@ const pillars = [
   },
 ];
 
-export default function StorySection() {
+export default function StorySection({ imageUrl }: { imageUrl?: string }) {
   return (
     <section id="story" aria-labelledby="story-heading" className="w-full bg-cream py-16 lg:py-24">
       <div className="container-gemo grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
@@ -30,11 +30,23 @@ export default function StorySection() {
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true, margin: "-80px" }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="grid grid-cols-2 gap-4 overflow-hidden rounded-[1.75rem] bg-sand p-4 lg:h-[420px]"
+          className="overflow-hidden rounded-[1.75rem] bg-sand"
         >
-          <div className="col-span-2 rounded-2xl bg-brand-300/70" />
-          <div className="rounded-2xl bg-brand-500/80" />
-          <div className="rounded-2xl bg-brand-600/70" />
+          {imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={imageUrl}
+              alt="Tidy, sunlit small-apartment corner styled with space-saving GEMO furniture"
+              className="h-[320px] w-full object-cover lg:h-[420px]"
+              loading="lazy"
+            />
+          ) : (
+            <div className="grid h-[320px] grid-cols-2 gap-4 p-4 lg:h-[420px]">
+              <div className="col-span-2 rounded-2xl bg-brand-300/70" />
+              <div className="rounded-2xl bg-brand-500/80" />
+              <div className="rounded-2xl bg-brand-600/70" />
+            </div>
+          )}
         </motion.div>
 
         <div>

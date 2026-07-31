@@ -8,12 +8,14 @@ import { getAllProducts, getBestsellers, getNewArrivals, getProductsByCategory }
 import { getSiteSettings } from "@/lib/site-settings";
 import { CATEGORIES } from "@/lib/categories";
 
-// Temporary: hotlinked from the Higgsfield generation used to preview this
-// design. Replace with a permanently-hosted copy (e.g. uploaded to
-// /public or Vercel Blob) before relying on this long-term — this URL is
-// not under our control and isn't guaranteed to stay available.
+// Temporary: hotlinked from Higgsfield generations used to preview this
+// design. Replace with permanently-hosted copies (e.g. uploaded to
+// /public or Vercel Blob) before relying on these long-term — these URLs
+// are not under our control and aren't guaranteed to stay available.
 const HERO_IMAGE_URL =
   "https://d8j0ntlcm91z4.cloudfront.net/user_3HHkKYRPCpTEvsAdSvMT9b9SKEx/hf_20260731_213404_2f1c5281-65f4-4519-a7f9-c87825fb80db.png";
+const STORY_IMAGE_URL =
+  "https://d8j0ntlcm91z4.cloudfront.net/user_3HHkKYRPCpTEvsAdSvMT9b9SKEx/hf_20260731_221028_22387285-5212-4a20-b48e-a39714843474.png";
 
 export default async function HomePage() {
   const [allProducts, bestsellers, newArrivals, settings, categoryProductLists] = await Promise.all([
@@ -87,7 +89,7 @@ export default async function HomePage() {
         </section>
       )}
 
-      <StorySection />
+      <StorySection imageUrl={STORY_IMAGE_URL} />
     </>
   );
 }
