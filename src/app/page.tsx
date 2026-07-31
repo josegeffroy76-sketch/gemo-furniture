@@ -15,7 +15,7 @@ import { CATEGORIES } from "@/lib/categories";
 const HERO_IMAGE_URL =
   "https://d8j0ntlcm91z4.cloudfront.net/user_3HHkKYRPCpTEvsAdSvMT9b9SKEx/hf_20260731_213404_2f1c5281-65f4-4519-a7f9-c87825fb80db.png";
 const STORY_IMAGE_URL =
-  "https://d8j0ntlcm91z4.cloudfront.net/user_3HHkKYRPCpTEvsAdSvMT9b9SKEx/hf_20260731_221028_22387285-5212-4a20-b48e-a39714843474.png";
+  "https://d8j0ntlcm91z4.cloudfront.net/user_3HHkKYRPCpTEvsAdSvMT9b9SKEx/hf_20260731_222532_5875e6b3-31f2-41a9-99a0-79b26340bbd3.png";
 // Self-hosted (uploaded to /public) — the animated version of the hero
 // image the user generated and provided directly.
 const HERO_VIDEO_URL = "/videos/hero.mp4";
