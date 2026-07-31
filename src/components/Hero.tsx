@@ -13,10 +13,13 @@ const fadeUp = {
 
 export default function Hero({
   imageUrl,
+  videoUrl,
   featuredProduct,
 }: {
   /** Falls back to the existing icon-placeholder look when not set. */
   imageUrl?: string;
+  /** When set, plays as a silent looping background clip; imageUrl is still used as its poster frame. */
+  videoUrl?: string;
   featuredProduct?: Product;
 }) {
   return (
@@ -111,7 +114,20 @@ export default function Hero({
           className="relative"
         >
           <div className="overflow-hidden rounded-[1.75rem] bg-sand">
-            {imageUrl ? (
+            {videoUrl ? (
+              <video
+                className="h-[380px] w-full object-cover sm:h-[480px] lg:h-[560px]"
+                poster={imageUrl}
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="auto"
+                aria-label="Sunlit small apartment living room styled with space-saving GEMO furniture"
+              >
+                <source src={videoUrl} type="video/mp4" />
+              </video>
+            ) : imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={imageUrl}

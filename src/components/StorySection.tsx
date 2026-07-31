@@ -38,7 +38,6 @@ export default function StorySection({ imageUrl }: { imageUrl?: string }) {
               src={imageUrl}
               alt="Tidy, sunlit small-apartment corner styled with space-saving GEMO furniture"
               className="h-[320px] w-full object-cover lg:h-[420px]"
-              loading="lazy"
             />
           ) : (
             <div className="grid h-[320px] grid-cols-2 gap-4 p-4 lg:h-[420px]">
