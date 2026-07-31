@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
 import { getAllProducts } from "@/lib/products";
+import { getSiteSettings } from "@/lib/site-settings";
 import { CATEGORIES } from "@/lib/categories";
 import type { ProductCategory } from "@/lib/types";
 
@@ -23,9 +24,8 @@ export default async function ShopPage({
   const { category } = await searchParams;
   const activeCategory = isValidCategory(category) ? category : undefined;
 
-  const products = (await getAllProducts()).filter((p) =>
-    activeCategory ? p.category === activeCategory : true
-  );
+  const [allProducts, settings] = await Promise.all([getAllProducts(), getSiteSettings()]);
+  const products = allProducts.filter((p) => (activeCategory ? p.category === activeCategory : true));
 
   return (
     <div className="container-gemo py-12">
@@ -67,7 +67,11 @@ export default async function ShopPage({
       {products.length > 0 ? (
         <div className="mt-8 grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
           {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard
+              key={product.id}
+              product={product}
+              freeShipping={settings.freeCheapestShipping}
+            />
           ))}
         </div>
       ) : (

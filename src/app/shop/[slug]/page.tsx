@@ -9,6 +9,7 @@ import ReviewStars from "@/components/ReviewStars";
 import { getAllProducts, getProductBySlug, getProductsByCategory } from "@/lib/products";
 import { getCategoryLabel } from "@/lib/categories";
 import { getReviewSummary, getReviewsForProduct } from "@/lib/reviews-store";
+import { getSiteSettings } from "@/lib/site-settings";
 import { formatPrice, percentOff } from "@/lib/format";
 
 export async function generateStaticParams() {
@@ -45,6 +46,8 @@ export default async function ProductPage({
 
   const reviewSummary = await getReviewSummary(product.id);
   const reviews = reviewSummary.visible ? await getReviewsForProduct(product.id) : [];
+  const settings = await getSiteSettings();
+  const freeShipping = settings.freeCheapestShipping;
 
   return (
     <div className="container-gemo py-10">
@@ -100,6 +103,11 @@ export default async function ProductPage({
               </>
             )}
           </div>
+          {freeShipping && (
+            <p className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600">
+              <Truck className="h-4 w-4" /> Free shipping on this item
+            </p>
+          )}
 
           <div className="mt-7">
             <AddToCartButton productId={product.id} className="w-full sm:w-auto" />
@@ -172,7 +180,7 @@ export default async function ProductPage({
           <h2 className="font-display text-xl text-ink">You may also like</h2>
           <div className="mt-6 grid grid-cols-2 gap-5 md:grid-cols-4">
             {related.map((p) => (
-              <ProductCard key={p.id} product={p} />
+              <ProductCard key={p.id} product={p} freeShipping={freeShipping} />
             ))}
           </div>
         </section>

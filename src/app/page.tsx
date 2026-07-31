@@ -3,6 +3,7 @@ import { ArrowRight, BadgeDollarSign, Home as HomeIcon, GraduationCap, Heart, Tr
 import ProductCard from "@/components/ProductCard";
 import ProductImage from "@/components/ProductImage";
 import { getBestsellers, getNewArrivals } from "@/lib/products";
+import { getSiteSettings } from "@/lib/site-settings";
 import { CATEGORIES } from "@/lib/categories";
 
 const WHY_GEMO = [
@@ -15,7 +16,11 @@ const WHY_GEMO = [
 ];
 
 export default async function HomePage() {
-  const [bestsellers, newArrivals] = await Promise.all([getBestsellers(4), getNewArrivals(4)]);
+  const [bestsellers, newArrivals, settings] = await Promise.all([
+    getBestsellers(4),
+    getNewArrivals(4),
+    getSiteSettings(),
+  ]);
   const featured = bestsellers.length ? bestsellers : newArrivals;
 
   return (
@@ -112,7 +117,11 @@ export default async function HomePage() {
           </div>
           <div className="mt-8 grid grid-cols-2 gap-5 md:grid-cols-4">
             {featured.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard
+                key={product.id}
+                product={product}
+                freeShipping={settings.freeCheapestShipping}
+              />
             ))}
           </div>
         </section>

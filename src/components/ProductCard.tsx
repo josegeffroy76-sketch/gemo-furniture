@@ -1,9 +1,17 @@
 import Link from "next/link";
+import { Truck } from "lucide-react";
 import type { Product } from "@/lib/types";
 import { formatPrice, percentOff } from "@/lib/format";
 import ProductPhoto from "./ProductPhoto";
 
-export default function ProductCard({ product }: { product: Product }) {
+export default function ProductCard({
+  product,
+  freeShipping = false,
+}: {
+  product: Product;
+  /** Mirrors the admin "Free shipping on cheapest option" toggle (see /admin/settings). */
+  freeShipping?: boolean;
+}) {
   const off = percentOff(product.price, product.compareAtPrice);
 
   return (
@@ -51,6 +59,11 @@ export default function ProductCard({ product }: { product: Product }) {
             </span>
           )}
         </div>
+        {freeShipping && (
+          <span className="mt-0.5 inline-flex w-fit items-center gap-1 text-[11px] font-semibold text-brand-600">
+            <Truck className="h-3 w-3" /> Free shipping
+          </span>
+        )}
       </div>
     </Link>
   );
