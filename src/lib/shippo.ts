@@ -14,8 +14,15 @@ export interface ShippingRateOption {
   id: string;
   carrier: string;
   serviceLevel: string;
-  amount: number; // cents
+  amount: number; // cents — what the customer is actually charged
   estimatedDays: number | null;
+  /**
+   * Set only when a promotion (e.g. the "free shipping on cheapest option"
+   * toggle in /admin/settings) has zeroed out `amount` — the real quoted
+   * price before the discount, so the UI can show it struck through instead
+   * of silently showing $0 with no context.
+   */
+  originalAmount?: number;
 }
 
 export function isShippoConfigured(): boolean {

@@ -269,7 +269,18 @@ export default function ShippingPage() {
                       <span className="block text-xs text-ink-soft">{rate.carrier}</span>
                     </span>
                   </span>
-                  <span className="font-semibold text-ink">{formatPrice(rate.amount)}</span>
+                  <span className="font-semibold text-ink">
+                    {rate.originalAmount != null ? (
+                      <span className="flex items-center gap-2">
+                        <span className="text-xs font-normal text-ink-soft/60 line-through">
+                          {formatPrice(rate.originalAmount)}
+                        </span>
+                        <span className="text-brand-600">FREE</span>
+                      </span>
+                    ) : (
+                      formatPrice(rate.amount)
+                    )}
+                  </span>
                 </label>
               ))}
             </div>
@@ -287,7 +298,20 @@ export default function ShippingPage() {
             </div>
             <div className="flex justify-between text-ink-soft">
               <span>Shipping</span>
-              <span className="text-ink">{selectedRate ? formatPrice(selectedRate.amount) : "—"}</span>
+              <span className="text-ink">
+                {!selectedRate ? (
+                  "—"
+                ) : selectedRate.originalAmount != null ? (
+                  <span className="flex items-center gap-2">
+                    <span className="text-xs text-ink-soft/60 line-through">
+                      {formatPrice(selectedRate.originalAmount)}
+                    </span>
+                    <span className="text-brand-600">FREE</span>
+                  </span>
+                ) : (
+                  formatPrice(selectedRate.amount)
+                )}
+              </span>
             </div>
             <div className="flex justify-between text-ink-soft">
               <span>Estimated tax</span>

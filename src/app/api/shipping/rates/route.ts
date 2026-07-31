@@ -1,7 +1,22 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getProductById } from "@/lib/products";
-import { getShippingRates } from "@/lib/shippo";
+import { getShippingRates, type ShippingRateOption } from "@/lib/shippo";
+import { getSiteSettings } from "@/lib/site-settings";
+
+/**
+ * Zeroes out the cheapest quoted rate (keeping the rest at their real price)
+ * when the "free shipping on cheapest option" toggle is on in /admin/settings.
+ * Determined by amount rather than array order, so this stays correct
+ * regardless of how the rates were sorted upstream.
+ */
+function applyFreeCheapestShipping(rates: ShippingRateOption[]): ShippingRateOption[] {
+  if (rates.length === 0) return rates;
+  const cheapest = rates.reduce((min, r) => (r.amount < min.amount ? r : min), rates[0]);
+  return rates.map((r) =>
+    r.id === cheapest.id ? { ...r, originalAmount: r.amount, amount: 0 } : r
+  );
+}
 
 const bodySchema = z.object({
   address: z.object({
@@ -48,7 +63,9 @@ export async function POST(request: Request) {
 
   try {
     const rates = await getShippingRates(parsed.data.address, items);
-    return NextResponse.json({ rates });
+    const settings = await getSiteSettings();
+    const finalRates = settings.freeCheapestShipping ? applyFreeCheapestShipping(rates) : rates;
+    return NextResponse.json({ rates: finalRates });
   } catch (err) {
     console.error("Shipping rate error:", err);
     return NextResponse.json(

@@ -27,6 +27,9 @@ export default async function AdminProtectedLayout({
           <Link href="/admin/reviews" className="text-ink hover:text-brand-600">
             Reviews
           </Link>
+          <Link href="/admin/settings" className="text-ink hover:text-brand-600">
+            Settings
+          </Link>
         </nav>
         <AdminLogoutButton />
       </div>
