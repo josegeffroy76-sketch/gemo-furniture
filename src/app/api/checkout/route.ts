@@ -166,20 +166,13 @@ export async function POST(request: Request) {
       customer_update: { address: "auto", name: "auto" },
       success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/checkout/cancel`,
-      payment_intent_data: {
-        shipping: {
-          name: address.name,
-          address: {
-            line1: address.street1,
-            line2: address.street2,
-            city: address.city,
-            state: address.state,
-            postal_code: address.zip,
-            country: address.country || "US",
-          },
-          phone: address.phone,
-        },
-      },
+      // Note: we intentionally do NOT set payment_intent_data.shipping here —
+      // Stripe rejects automatic_tax combined with a manually-set shipping
+      // address on the PaymentIntent ("You cannot enable automatic tax
+      // calculation with `payment_intent_data[shipping]` set."). The address
+      // is already preserved below in metadata.shippingAddress, which is what
+      // the webhook and the admin shipping-label flow both read from — this
+      // field wasn't otherwise used anywhere in the app.
       metadata: {
         shippingRateId: shippingRate.id,
         shippingCarrier: shippingRate.carrier,
@@ -198,11 +191,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ url: session.url });
   } catch (err) {
     console.error("Stripe checkout session error:", err);
-    // TEMPORARY: surface the raw Stripe error message so we can diagnose the
-    // live 502 without dashboard log access. Revert once resolved.
-    const debugMessage = err instanceof Error ? err.message : String(err);
     return NextResponse.json(
-      { error: "Couldn't start Stripe checkout. Please try again.", debugMessage },
+      { error: "Couldn't start Stripe checkout. Please try again." },
       { status: 502 }
     );
   }
