@@ -6,7 +6,7 @@ import { CATEGORIES } from "@/lib/categories";
 export default function Footer() {
   return (
     <footer className="border-t border-line bg-sand">
-      <div className="container-gemo grid gap-10 py-14 md:grid-cols-4">
+      <div className="container-gemo grid gap-10 py-14 md:grid-cols-5">
         <div className="md:col-span-2">
           <Logo />
           <p className="mt-4 max-w-sm text-sm leading-relaxed text-ink-soft">
@@ -59,6 +59,37 @@ export default function Footer() {
             <li>
               <Link href="/cart" className="text-sm text-ink-soft hover:text-brand-600">
                 Cart
+              </Link>
+            </li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-semibold text-ink">Legal</h3>
+          <ul className="mt-4 space-y-2.5">
+            <li>
+              <Link href="/privacy" className="text-sm text-ink-soft hover:text-brand-600">
+                Privacy Policy
+              </Link>
+            </li>
+            <li>
+              <Link href="/terms" className="text-sm text-ink-soft hover:text-brand-600">
+                Terms & Conditions
+              </Link>
+            </li>
+            <li>
+              <Link href="/returns" className="text-sm text-ink-soft hover:text-brand-600">
+                Return Policy
+              </Link>
+            </li>
+            <li>
+              <Link href="/shipping" className="text-sm text-ink-soft hover:text-brand-600">
+                Shipping Policy
+              </Link>
+            </li>
+            <li>
+              <Link href="/payment-policy" className="text-sm text-ink-soft hover:text-brand-600">
+                Payment Policy
               </Link>
             </li>
           </ul>
