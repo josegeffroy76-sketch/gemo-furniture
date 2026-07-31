@@ -98,6 +98,11 @@ export async function POST(request: Request) {
     // Non-fatal — the Shipping page just falls back to hiding the estimate;
     // the real tax still gets calculated correctly on Stripe's own checkout
     // page moments later.
-    return NextResponse.json({ taxAmount: null, reason: "calculation_failed" }, { status: 200 });
+    // TEMPORARY debugMessage for live diagnosis — revert once resolved.
+    const debugMessage = err instanceof Error ? err.message : String(err);
+    return NextResponse.json(
+      { taxAmount: null, reason: "calculation_failed", debugMessage },
+      { status: 200 }
+    );
   }
 }
