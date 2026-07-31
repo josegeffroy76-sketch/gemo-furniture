@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Loader2, Truck, ChevronLeft } from "lucide-react";
 import { useCartDetails } from "@/lib/cart-store";
@@ -35,6 +35,48 @@ export default function ShippingPage() {
   const [loadingRates, setLoadingRates] = useState(false);
   const [checkingOut, setCheckingOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [taxEstimate, setTaxEstimate] = useState<number | null>(null);
+  const [loadingTax, setLoadingTax] = useState(false);
+
+  // Live tax preview so customers see the real sales tax breakdown here,
+  // instead of only finding out on Stripe's own payment page. Re-runs
+  // whenever the chosen shipping rate or the address it was quoted for
+  // changes. Non-fatal on failure — checkout still works either way, since
+  // Stripe recalculates the authoritative amount at payment time regardless.
+  useEffect(() => {
+    const selected = rates?.find((r) => r.id === selectedRateId);
+    if (!selected) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTaxEstimate(null);
+      return;
+    }
+    let cancelled = false;
+    setLoadingTax(true);
+    fetch("/api/tax/estimate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        lines: items.map((i) => ({ productId: i.product.id, quantity: i.quantity })),
+        address: { ...address, country: "US" },
+        shippingAmount: selected.amount,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled) return;
+        setTaxEstimate(typeof data.taxAmount === "number" ? data.taxAmount : null);
+      })
+      .catch(() => {
+        if (!cancelled) setTaxEstimate(null);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingTax(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedRateId, rates, address.street1, address.city, address.state, address.zip]);
 
   if (items.length === 0) {
     return (
@@ -99,7 +141,7 @@ export default function ShippingPage() {
   }
 
   const selectedRate = rates?.find((r) => r.id === selectedRateId);
-  const total = subtotal + (selectedRate?.amount ?? 0);
+  const total = subtotal + (selectedRate?.amount ?? 0) + (taxEstimate ?? 0);
 
   return (
     <div className="container-gemo py-10">
@@ -247,11 +289,28 @@ export default function ShippingPage() {
               <span>Shipping</span>
               <span className="text-ink">{selectedRate ? formatPrice(selectedRate.amount) : "—"}</span>
             </div>
+            <div className="flex justify-between text-ink-soft">
+              <span>Estimated tax</span>
+              <span className="text-ink">
+                {!selectedRate
+                  ? "—"
+                  : loadingTax
+                    ? "…"
+                    : taxEstimate !== null
+                      ? formatPrice(taxEstimate)
+                      : "—"}
+              </span>
+            </div>
             <div className="flex justify-between border-t border-line pt-2 font-semibold text-ink">
               <span>Total</span>
               <span>{formatPrice(total)}</span>
             </div>
           </div>
+          {selectedRate && taxEstimate !== null && (
+            <p className="mt-2 text-[11px] leading-snug text-ink-soft/70">
+              Estimated for your address — the final amount is confirmed on the payment page.
+            </p>
+          )}
 
           <button
             type="button"
