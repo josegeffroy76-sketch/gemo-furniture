@@ -97,12 +97,10 @@ export async function POST(request: Request) {
     console.error("Stripe tax calculation error:", err);
     // Non-fatal — the Shipping page just falls back to hiding the estimate;
     // the real tax still gets calculated correctly on Stripe's own checkout
-    // page moments later.
-    // TEMPORARY debugMessage for live diagnosis — revert once resolved.
-    const debugMessage = err instanceof Error ? err.message : String(err);
-    return NextResponse.json(
-      { taxAmount: null, reason: "calculation_failed", debugMessage },
-      { status: 200 }
-    );
+    // page moments later. (A common cause during pre-launch testing: Stripe
+    // Tax settings — origin address and state registrations — are separate
+    // per mode, so test-mode keys need their own setup under
+    // dashboard.stripe.com/test/settings/tax even after live mode is done.)
+    return NextResponse.json({ taxAmount: null, reason: "calculation_failed" }, { status: 200 });
   }
 }
