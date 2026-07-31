@@ -47,6 +47,24 @@ export async function POST(request: Request) {
       });
       return NextResponse.json(registration);
     }
+    if (action === "calc") {
+      const calculation = await stripe.tax.calculations.create({
+        currency: "usd",
+        line_items: [{ amount: 24800, quantity: 1, reference: "p002" }],
+        customer_details: {
+          address: {
+            line1: "123 Main St",
+            city: "Los Angeles",
+            state: "CA",
+            postal_code: "90001",
+            country: "US",
+          },
+          address_source: "shipping",
+        },
+        shipping_cost: { amount: 1097, tax_code: "txcd_92010001" },
+      });
+      return NextResponse.json(calculation);
+    }
     const settings = await stripe.tax.settings.update({
       head_office: {
         address: {
