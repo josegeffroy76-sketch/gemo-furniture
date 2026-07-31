@@ -198,8 +198,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ url: session.url });
   } catch (err) {
     console.error("Stripe checkout session error:", err);
+    // TEMPORARY: surface the raw Stripe error message so we can diagnose the
+    // live 502 without dashboard log access. Revert once resolved.
+    const debugMessage = err instanceof Error ? err.message : String(err);
     return NextResponse.json(
-      { error: "Couldn't start Stripe checkout. Please try again." },
+      { error: "Couldn't start Stripe checkout. Please try again.", debugMessage },
       { status: 502 }
     );
   }
