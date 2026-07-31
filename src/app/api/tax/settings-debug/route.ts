@@ -27,12 +27,26 @@ export async function GET() {
   }
 }
 
-export async function POST() {
+export async function POST(request: Request) {
   if (!isStripeConfigured()) {
     return NextResponse.json({ error: "not_configured" }, { status: 200 });
   }
+  const action = new URL(request.url).searchParams.get("action") || "head_office";
   try {
     const stripe = getStripe();
+    if (action === "registration") {
+      const registration = await stripe.tax.registrations.create({
+        active_from: "now",
+        country: "US",
+        country_options: {
+          us: {
+            state: "CA",
+            type: "state_sales_tax",
+          },
+        },
+      });
+      return NextResponse.json(registration);
+    }
     const settings = await stripe.tax.settings.update({
       head_office: {
         address: {
