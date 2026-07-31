@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     if (action === "calc") {
       const calculation = await stripe.tax.calculations.create({
         currency: "usd",
-        line_items: [{ amount: 24800, quantity: 1, reference: "p002" }],
+        line_items: [{ amount: 24800, quantity: 1, reference: "p002", tax_code: "txcd_10000000" }],
         customer_details: {
           address: {
             line1: "123 Main St",
