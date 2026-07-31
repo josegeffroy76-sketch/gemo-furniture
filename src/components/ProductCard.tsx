@@ -17,12 +17,12 @@ export default function ProductCard({
   return (
     <Link
       href={`/shop/${product.slug}`}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-white/60 transition-shadow hover:shadow-lg hover:shadow-brand-900/5"
+      className="group flex flex-col overflow-hidden rounded-[1.25rem] border border-line bg-white/60 transition-shadow duration-300 hover:shadow-lg hover:shadow-brand-900/5"
     >
-      <div className="relative">
+      <div className="relative overflow-hidden">
         <ProductPhoto
           product={product}
-          className="aspect-square w-full transition-transform duration-300 group-hover:scale-[1.03]"
+          className="aspect-square w-full transition-transform duration-[600ms] ease-out group-hover:scale-[1.04]"
           iconClassName="h-20 w-20"
         />
         {(product.bestseller || product.newArrival || off) && (
@@ -47,14 +47,16 @@ export default function ProductCard({
       </div>
 
       <div className="flex flex-1 flex-col gap-1.5 p-4">
-        <h3 className="text-sm font-medium leading-snug text-ink">{product.name}</h3>
+        <h3 className="font-display text-base leading-snug text-ink" style={{ fontWeight: 400 }}>
+          {product.name}
+        </h3>
         <p className="line-clamp-2 text-xs leading-relaxed text-ink-soft">
           {product.shortDescription}
         </p>
         <div className="mt-2 flex items-baseline gap-2">
           <span className="text-base font-semibold text-ink">{formatPrice(product.price)}</span>
           {product.compareAtPrice && (
-            <span className="text-xs text-ink-soft/70 line-through">
+            <span className="text-xs text-ink-muted line-through">
               {formatPrice(product.compareAtPrice)}
             </span>
           )}

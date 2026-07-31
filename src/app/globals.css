@@ -4,20 +4,25 @@
   --background: #FBF7F2;
   --foreground: #221F1C;
 
-  /* GEMO Furniture brand palette (derived from logo) */
+  /*
+   * GEMO Furniture brand palette (derived from logo). Refined slightly in
+   * 2026 to match the "clay" direction explored in the Magic Patterns visual
+   * proposal — the hue was already almost identical, this just tunes it.
+   */
   --color-brand-50: #FBF0EB;
   --color-brand-100: #F5DCD1;
   --color-brand-200: #E8B6A2;
-  --color-brand-300: #DA8E70;
+  --color-brand-300: #D98F6E;
   --color-brand-400: #CC6947;
-  --color-brand-500: #BF4E30;
-  --color-brand-600: #A43F26;
+  --color-brand-500: #B4502E;
+  --color-brand-600: #8E3D22;
   --color-brand-700: #83321F;
   --color-brand-800: #642619;
   --color-brand-900: #451A11;
 
   --color-ink: #221F1C;
   --color-ink-soft: #504A44;
+  --color-ink-muted: #8A7A6E;
   --color-cream: #FBF7F2;
   --color-sand: #F1E7DA;
   --color-sand-dark: #E5D5C1;
@@ -41,20 +46,25 @@
 
   --color-ink: var(--color-ink);
   --color-ink-soft: var(--color-ink-soft);
+  --color-ink-muted: var(--color-ink-muted);
   --color-cream: var(--color-cream);
   --color-sand: var(--color-sand);
   --color-sand-dark: var(--color-sand-dark);
   --color-line: var(--color-line);
 
   /*
-   * System font stacks — no external font requests at build or runtime.
-   * To match the brand more closely later, self-host real font files with
-   * next/font/local (e.g. Fraunces + Jost .woff2 files in /public/fonts)
-   * and swap these two lines for the generated CSS variables.
+   * Fraunces (display/serif) + Inter (sans) are loaded via next/font/google
+   * in layout.tsx, which downloads and self-hosts them at build time — no
+   * runtime request to Google's servers, so this keeps the "no external
+   * font requests" goal while getting the real brand typefaces. Each
+   * variable falls back to the previous system-font stack if the font
+   * variable classes aren't applied for some reason (e.g. an isolated
+   * preview render).
    */
-  --font-sans: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, ui-sans-serif, system-ui,
-    sans-serif;
-  --font-display: Georgia, "Iowan Old Style", "Palatino Linotype", ui-serif, serif;
+  --font-sans: var(--font-sans-family), -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
+    ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display-family), Georgia, "Iowan Old Style", "Palatino Linotype",
+    ui-serif, serif;
 }
 
 body {
@@ -73,6 +83,27 @@ body {
 @media (min-width: 768px) {
   .container-gemo {
     padding-inline: 2rem;
+  }
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+@keyframes gemo-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.animate-marquee {
+  animation: gemo-marquee 32s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee {
+    animation: none;
   }
 }
 
