@@ -56,6 +56,10 @@ export async function POST(request: Request) {
           amount: product.price * line.quantity,
           quantity: line.quantity,
           reference: product.id,
+          // See the matching comment in /api/checkout/route.ts — the
+          // account's default tax code was misconfigured as a digital-goods
+          // category, which silently zeroed out tax on every calculation.
+          tax_code: "txcd_99999999", // General - Tangible Goods
         };
       })
     )

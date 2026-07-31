@@ -90,6 +90,14 @@ export async function POST(request: Request) {
           product_data: {
             name: product.name,
             metadata: { productId: product.id },
+            // Stripe's account-level default tax code was found to be set to
+            // "General - Electronically Supplied Services" (a digital-goods
+            // category, txcd_10000000) rather than physical goods — which
+            // silently made Stripe Tax treat every order as tax-exempt
+            // ($0 tax collected, even in states with an active registration).
+            // Setting the correct code explicitly here means checkout is
+            // correct regardless of whatever the account default is.
+            tax_code: "txcd_99999999", // General - Tangible Goods
           },
         },
       };
