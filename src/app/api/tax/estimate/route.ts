@@ -99,11 +99,6 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     console.error("Stripe tax calculation error:", err);
-    // TEMPORARY debugMessage for live diagnosis — revert once resolved.
-    const debugMessage = err instanceof Error ? err.message : String(err);
-    return NextResponse.json(
-      { taxAmount: null, reason: "calculation_failed", debugMessage },
-      { status: 200 }
-    );
+    return NextResponse.json({ taxAmount: null, reason: "calculation_failed" }, { status: 200 });
   }
 }
