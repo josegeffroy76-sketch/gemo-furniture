@@ -157,6 +157,13 @@ export async function POST(request: Request) {
       // registered in the Stripe Dashboard (Settings → Tax) — until that's
       // set up there, this calculates $0 tax everywhere rather than erroring.
       automatic_tax: { enabled: true },
+      // Without this, Checkout ignores the address we just attached to the
+      // Customer above (customer_update.address defaults to "never") and
+      // automatic_tax then has no address to calculate from — which Stripe
+      // rejects outright since we also don't use Stripe's own
+      // shipping/billing address collection. "auto" tells Checkout it's
+      // safe to read (and keep in sync) the Customer's address for this.
+      customer_update: { address: "auto", name: "auto" },
       success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/checkout/cancel`,
       payment_intent_data: {
