@@ -1,6 +1,13 @@
-import type { ProductCategory } from "./types";
+import type { CategoryRecord } from "./types";
+import { getCategoryOverrides, getCustomCategories } from "./categories-store";
 
-export const CATEGORIES: { slug: ProductCategory; label: string; blurb: string }[] = [
+/**
+ * Starter category set, shipped in code. These 7 slugs can be renamed
+ * (label/blurb) by an admin — see getCategories() below — but the slugs
+ * themselves are baked into this file and can't be deleted, since removing
+ * one here is a code change, not an admin action.
+ */
+export const SEED_CATEGORIES: CategoryRecord[] = [
   {
     slug: "sofas-sectionals",
     label: "Sofas & Sectionals",
@@ -38,6 +45,18 @@ export const CATEGORIES: { slug: ProductCategory; label: string; blurb: string }
   },
 ];
 
-export function getCategoryLabel(slug: ProductCategory): string {
-  return CATEGORIES.find((c) => c.slug === slug)?.label ?? slug;
+/**
+ * Merges the starter category set above with any admin-panel renames
+ * (label/blurb overrides) and admin-added custom categories, in that order.
+ * This is the single read path every page uses — see
+ * src/app/api/admin/categories for how admins add/edit/remove these.
+ */
+export async function getCategories(): Promise<CategoryRecord[]> {
+  const [overrides, custom] = await Promise.all([getCategoryOverrides(), getCustomCategories()]);
+  const seeded = SEED_CATEGORIES.map((c) => ({ ...c, ...overrides[c.slug] }));
+  return [...seeded, ...custom];
+}
+
+export async function getCategoryLabel(slug: string): Promise<string> {
+  return (await getCategories()).find((c) => c.slug === slug)?.label ?? slug;
 }

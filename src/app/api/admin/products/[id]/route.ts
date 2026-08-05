@@ -3,20 +3,14 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { setOverride, updateCustomProduct, removeCustomProduct } from "@/lib/catalog-store";
+import { getCategories } from "@/lib/categories";
 
-const CATEGORY_SLUGS = [
-  "sofas-sectionals",
-  "sofa-beds",
-  "bedroom",
-  "storage",
-  "dining",
-  "home-office",
-  "accent-decor",
-] as const;
-
+// Categories are admin-defined now (see src/app/api/admin/categories) — the
+// handler below checks a submitted category slug against getCategories()
+// at request time instead of a fixed enum.
 const patchSchema = z.object({
   name: z.string().min(1).optional(),
-  category: z.enum(CATEGORY_SLUGS).optional(),
+  category: z.string().min(1).optional(),
   price: z.number().int().min(0).optional(),
   compareAtPrice: z.number().int().min(0).optional(),
   shortDescription: z.string().min(1).optional(),
@@ -61,6 +55,13 @@ export async function PATCH(
   const parsed = patchSchema.safeParse(json);
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid update." }, { status: 400 });
+  }
+
+  if (parsed.data.category) {
+    const categories = await getCategories();
+    if (!categories.some((c) => c.slug === parsed.data.category)) {
+      return NextResponse.json({ error: "Unknown category." }, { status: 400 });
+    }
   }
 
   if (id.startsWith("custom-")) {

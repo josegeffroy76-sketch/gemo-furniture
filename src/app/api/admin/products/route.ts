@@ -4,21 +4,15 @@ import { z } from "zod";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { getAllProducts } from "@/lib/products";
 import { addCustomProduct } from "@/lib/catalog-store";
+import { getCategories } from "@/lib/categories";
 import type { Product } from "@/lib/types";
 
-const CATEGORY_SLUGS = [
-  "sofas-sectionals",
-  "sofa-beds",
-  "bedroom",
-  "storage",
-  "dining",
-  "home-office",
-  "accent-decor",
-] as const;
-
+// Categories are admin-defined now (see src/app/api/admin/categories), so
+// there's no fixed enum to validate against here — instead the handler
+// below checks the submitted slug against getCategories() at request time.
 const newProductSchema = z.object({
   name: z.string().min(1),
-  category: z.enum(CATEGORY_SLUGS),
+  category: z.string().min(1),
   price: z.number().int().min(0),
   compareAtPrice: z.number().int().min(0).optional(),
   shortDescription: z.string().min(1),
@@ -58,6 +52,11 @@ export async function POST(request: Request) {
   const parsed = newProductSchema.safeParse(json);
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid product data." }, { status: 400 });
+  }
+
+  const categories = await getCategories();
+  if (!categories.some((c) => c.slug === parsed.data.category)) {
+    return NextResponse.json({ error: "Unknown category." }, { status: 400 });
   }
 
   const id = `custom-${Date.now()}`;

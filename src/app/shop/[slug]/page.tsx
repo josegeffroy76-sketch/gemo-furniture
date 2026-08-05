@@ -43,6 +43,7 @@ export default async function ProductPage({
   const related = (await getProductsByCategory(product.category))
     .filter((p) => p.id !== product.id)
     .slice(0, 4);
+  const categoryLabel = await getCategoryLabel(product.category);
 
   const reviewSummary = await getReviewSummary(product.id);
   const reviews = reviewSummary.visible ? await getReviewsForProduct(product.id) : [];
@@ -57,7 +58,7 @@ export default async function ProductPage({
         </Link>
         <ChevronRight className="h-3 w-3" />
         <Link href={`/shop?category=${product.category}`} className="hover:text-brand-600">
-          {getCategoryLabel(product.category)}
+          {categoryLabel}
         </Link>
         <ChevronRight className="h-3 w-3" />
         <span className="text-ink">{product.name}</span>

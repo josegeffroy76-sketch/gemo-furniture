@@ -6,7 +6,7 @@ import ProductCard from "@/components/ProductCard";
 import StorySection from "@/components/StorySection";
 import { getAllProducts, getBestsellers, getNewArrivals, getProductsByCategory } from "@/lib/products";
 import { getSiteSettings } from "@/lib/site-settings";
-import { CATEGORIES } from "@/lib/categories";
+import { getCategories } from "@/lib/categories";
 
 // Temporary: hotlinked from Higgsfield generations used to preview this
 // design. Replace with permanently-hosted copies (e.g. uploaded to
@@ -21,17 +21,18 @@ const STORY_IMAGE_URL =
 const HERO_VIDEO_URL = "/videos/hero.mp4";
 
 export default async function HomePage() {
+  const categoryList = await getCategories();
   const [allProducts, bestsellers, newArrivals, settings, categoryProductLists] = await Promise.all([
     getAllProducts(),
     getBestsellers(4),
     getNewArrivals(4),
     getSiteSettings(),
-    Promise.all(CATEGORIES.map((c) => getProductsByCategory(c.slug))),
+    Promise.all(categoryList.map((c) => getProductsByCategory(c.slug))),
   ]);
 
   const featured = bestsellers.length ? bestsellers : newArrivals;
 
-  const categories = CATEGORIES.map((c, i) => ({
+  const categories = categoryList.map((c, i) => ({
     slug: c.slug,
     label: c.label,
     blurb: c.blurb,
