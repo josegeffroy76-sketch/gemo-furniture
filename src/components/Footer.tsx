@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { Truck, ShieldCheck, BadgeDollarSign } from "lucide-react";
 import Logo from "./Logo";
-import { CATEGORIES } from "@/lib/categories";
+import { getCategories } from "@/lib/categories";
 
-export default function Footer() {
+export default async function Footer() {
+  const CATEGORIES = await getCategories();
   return (
     <footer className="w-full border-t border-line bg-cream">
       <div className="container-gemo py-16">

@@ -2,8 +2,7 @@
 
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { Eye, EyeOff, Trash2, Plus, Loader2, Pencil, X, Upload } from "lucide-react";
-import type { Product, ProductCategory } from "@/lib/types";
-import { CATEGORIES } from "@/lib/categories";
+import type { Product, ProductCategory, CategoryRecord } from "@/lib/types";
 import { formatPrice } from "@/lib/format";
 
 /** Form representation of an extra shipping box (see Product.extraShipBoxes). */
@@ -167,29 +166,218 @@ function LabeledInput({
   );
 }
 
-/** Generic labeled select — used for Category so it reads the same as the other fields. */
-function LabeledSelect({
-  label,
+/**
+ * Category dropdown plus inline "add new category" / "edit this category"
+ * mini-forms, so admins don't have to leave the product form to manage
+ * categories. Shared between the Add product form and the Edit product
+ * panel. Talks to /api/admin/categories directly and calls
+ * onCategoriesChanged so the parent can refresh its category list.
+ */
+function CategoryPicker({
+  categories,
   value,
   onChange,
-  children,
+  onCategoriesChanged,
 }: {
-  label: string;
+  categories: CategoryRecord[];
   value: string;
-  onChange: (value: string) => void;
-  children: React.ReactNode;
+  onChange: (slug: string) => void;
+  onCategoriesChanged: () => void;
 }) {
+  const [mode, setMode] = useState<"idle" | "add" | "edit">("idle");
+  const [label, setLabel] = useState("");
+  const [blurb, setBlurb] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const selected = categories.find((c) => c.slug === value);
+
+  function startAdd() {
+    setLabel("");
+    setBlurb("");
+    setError(null);
+    setMode("add");
+  }
+
+  function startEdit() {
+    if (!selected) return;
+    setLabel(selected.label);
+    setBlurb(selected.blurb);
+    setError(null);
+    setMode("edit");
+  }
+
+  async function handleAddCategory() {
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ label, blurb }),
+      });
+      const { data, error: parseError } = await parseJsonResponse<{
+        category?: CategoryRecord;
+        error?: string;
+      }>(res);
+      if (parseError) throw new Error(parseError);
+      if (!res.ok || !data?.category) throw new Error(data?.error ?? "Couldn't add category.");
+      onCategoriesChanged();
+      onChange(data.category.slug);
+      setMode("idle");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleEditCategory() {
+    if (!selected) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/admin/categories/${selected.slug}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ label, blurb }),
+      });
+      const { data, error: parseError } = await parseJsonResponse<{ error?: string }>(res);
+      if (parseError) throw new Error(parseError);
+      if (!res.ok) throw new Error(data?.error ?? "Couldn't save category.");
+      onCategoriesChanged();
+      setMode("idle");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDeleteCategory() {
+    if (!selected) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/admin/categories/${selected.slug}`, { method: "DELETE" });
+      const { data, error: parseError } = await parseJsonResponse<{ error?: string }>(res);
+      if (parseError) throw new Error(parseError);
+      if (!res.ok) throw new Error(data?.error ?? "Couldn't delete category.");
+      onCategoriesChanged();
+      onChange(categories.find((c) => c.slug !== selected.slug)?.slug ?? "");
+      setMode("idle");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
-    <label className="block">
-      <span className="mb-1 block text-[11px] font-medium text-ink-soft">{label}</span>
+    <div className="block">
+      <span className="mb-1 flex items-center justify-between text-[11px] font-medium text-ink-soft">
+        Category
+        <span className="flex items-center gap-2.5">
+          {selected && (
+            <button
+              type="button"
+              onClick={startEdit}
+              className="font-semibold text-brand-700 hover:underline"
+            >
+              Edit
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={startAdd}
+            className="font-semibold text-brand-700 hover:underline"
+          >
+            + New category
+          </button>
+        </span>
+      </span>
       <select
-        className="w-full rounded-lg border border-line px-3 py-2 text-sm"
+        className="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       >
-        {children}
+        {categories.map((c) => (
+          <option key={c.slug} value={c.slug}>
+            {c.label}
+          </option>
+        ))}
       </select>
-    </label>
+
+      {mode !== "idle" && (
+        <div className="mt-2 rounded-lg border border-line/70 bg-sand/40 p-3">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-ink-soft">
+            {mode === "add" ? "New category" : `Edit "${selected?.label}"`}
+          </p>
+          {/*
+            Deliberately a <div>, not a <form>: this picker is used inside
+            the "Add product" <form> too, and nested <form> elements are
+            invalid HTML — the browser silently mangles the DOM (React then
+            logs a hydration error), and a stray Enter keypress here could
+            bubble up and submit the outer product form. Enter-to-submit is
+            wired manually on the name input instead.
+          */}
+          <div className="flex flex-col gap-2">
+            <input
+              placeholder="Category name"
+              className="w-full rounded-lg border border-line px-3 py-2 text-sm"
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key !== "Enter" || !label.trim()) return;
+                e.preventDefault();
+                void (mode === "add" ? handleAddCategory() : handleEditCategory());
+              }}
+            />
+            <input
+              placeholder="Short description shown on the homepage (optional)"
+              className="w-full rounded-lg border border-line px-3 py-2 text-sm"
+              value={blurb}
+              onChange={(e) => setBlurb(e.target.value)}
+            />
+            {error && <p className="text-xs text-brand-700">{error}</p>}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={saving || !label.trim()}
+                onClick={() => void (mode === "add" ? handleAddCategory() : handleEditCategory())}
+                className="flex items-center gap-1.5 rounded-full bg-ink px-4 py-1.5 text-xs font-semibold text-cream disabled:opacity-60"
+              >
+                {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                {mode === "add" ? "Add category" : "Save changes"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("idle")}
+                className="rounded-full border border-line px-4 py-1.5 text-xs font-medium text-ink-soft hover:bg-white"
+              >
+                Cancel
+              </button>
+              {mode === "edit" && (
+                <button
+                  type="button"
+                  onClick={handleDeleteCategory}
+                  disabled={saving}
+                  className="ml-auto text-xs font-semibold text-brand-700 hover:underline disabled:opacity-60"
+                >
+                  Delete category
+                </button>
+              )}
+            </div>
+            {mode === "edit" && (
+              <p className="text-[11px] text-ink-soft/70">
+                Starter categories can be renamed but not deleted — custom categories can be
+                deleted once they have no products left in them.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -340,6 +528,7 @@ function ExtraBoxesEditor({
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[] | null>(null);
+  const [categories, setCategories] = useState<CategoryRecord[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
@@ -352,12 +541,19 @@ export default function AdminProductsPage() {
     setProducts(data?.products ?? []);
   }, []);
 
+  const loadCategories = useCallback(async () => {
+    const res = await fetch("/api/admin/categories");
+    const { data } = await parseJsonResponse<{ categories: CategoryRecord[] }>(res);
+    setCategories(data?.categories ?? []);
+  }, []);
+
   useEffect(() => {
     // Intentional client-side fetch-on-mount for this admin tool (not a
     // performance-sensitive path) — see rule docs for the general concern.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
-  }, [load]);
+    void loadCategories();
+  }, [load, loadCategories]);
 
   async function patchProduct(id: string, patch: Partial<Product>) {
     await fetch(`/api/admin/products/${id}`, {
@@ -440,17 +636,12 @@ export default function AdminProductsPage() {
             value={form.name}
             onChange={(v) => setForm({ ...form, name: v })}
           />
-          <LabeledSelect
-            label="Category"
+          <CategoryPicker
+            categories={categories}
             value={form.category}
             onChange={(v) => setForm({ ...form, category: v as ProductCategory })}
-          >
-            {CATEGORIES.map((c) => (
-              <option key={c.slug} value={c.slug}>
-                {c.label}
-              </option>
-            ))}
-          </LabeledSelect>
+            onCategoriesChanged={loadCategories}
+          />
 
           <FormSectionHeading>Price &amp; inventory</FormSectionHeading>
           <LabeledNumberInput
@@ -639,6 +830,8 @@ export default function AdminProductsPage() {
                     <td colSpan={5} className="bg-sand/40 px-4 py-5">
                       <EditProductPanel
                         product={p}
+                        categories={categories}
+                        onCategoriesChanged={loadCategories}
                         onClose={() => setEditingId(null)}
                         onSaved={load}
                       />
@@ -659,10 +852,14 @@ export default function AdminProductsPage() {
 
 function EditProductPanel({
   product,
+  categories,
+  onCategoriesChanged,
   onClose,
   onSaved,
 }: {
   product: Product;
+  categories: CategoryRecord[];
+  onCategoriesChanged: () => void;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -791,17 +988,12 @@ function EditProductPanel({
           value={fields.name}
           onChange={(v) => setFields({ ...fields, name: v })}
         />
-        <LabeledSelect
-          label="Category"
+        <CategoryPicker
+          categories={categories}
           value={fields.category}
           onChange={(v) => setFields({ ...fields, category: v as ProductCategory })}
-        >
-          {CATEGORIES.map((c) => (
-            <option key={c.slug} value={c.slug}>
-              {c.label}
-            </option>
-          ))}
-        </LabeledSelect>
+          onCategoriesChanged={onCategoriesChanged}
+        />
 
         <FormSectionHeading>Price &amp; inventory</FormSectionHeading>
         <LabeledNumberInput

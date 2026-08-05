@@ -3,8 +3,7 @@ import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
 import { getAllProducts } from "@/lib/products";
 import { getSiteSettings } from "@/lib/site-settings";
-import { CATEGORIES } from "@/lib/categories";
-import type { ProductCategory } from "@/lib/types";
+import { getCategories } from "@/lib/categories";
 
 export const metadata: Metadata = {
   title: "Shop All Furniture",
@@ -12,19 +11,18 @@ export const metadata: Metadata = {
     "Browse GEMO Furniture's full collection of space-saving, affordable furniture — sofas, beds, storage, dining, and more.",
 };
 
-function isValidCategory(value: string | undefined): value is ProductCategory {
-  return CATEGORIES.some((c) => c.slug === value);
-}
-
 export default async function ShopPage({
   searchParams,
 }: {
   searchParams: Promise<{ category?: string }>;
 }) {
   const { category } = await searchParams;
-  const activeCategory = isValidCategory(category) ? category : undefined;
-
-  const [allProducts, settings] = await Promise.all([getAllProducts(), getSiteSettings()]);
+  const [allProducts, settings, CATEGORIES] = await Promise.all([
+    getAllProducts(),
+    getSiteSettings(),
+    getCategories(),
+  ]);
+  const activeCategory = CATEGORIES.some((c) => c.slug === category) ? category : undefined;
   const products = allProducts.filter((p) => (activeCategory ? p.category === activeCategory : true));
 
   return (

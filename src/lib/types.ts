@@ -1,11 +1,17 @@
-export type ProductCategory =
-  | "sofas-sectionals"
-  | "sofa-beds"
-  | "bedroom"
-  | "storage"
-  | "dining"
-  | "home-office"
-  | "accent-decor";
+// Categories used to be a fixed union of 7 slugs. Admins can now add their
+// own categories from the admin Products page (see src/lib/categories.ts and
+// src/app/api/admin/categories), so this is a plain string — any slug
+// returned by getCategories() is valid. The original 7 slugs
+// ("sofas-sectionals", "sofa-beds", "bedroom", "storage", "dining",
+// "home-office", "accent-decor") still ship as the starter set.
+export type ProductCategory = string;
+
+/** A shop-by-room category shown on the homepage and used to filter /shop. */
+export interface CategoryRecord {
+  slug: ProductCategory;
+  label: string;
+  blurb: string;
+}
 
 export type ProductIcon =
   | "sofa"
