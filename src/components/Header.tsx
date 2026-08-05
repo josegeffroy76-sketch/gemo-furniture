@@ -5,20 +5,25 @@ import { useEffect, useState } from "react";
 import { Menu, X, ShoppingBag } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import Logo from "./Logo";
+import LanguageSwitcher from "./LanguageSwitcher";
 import { useCartCount } from "@/lib/cart-store";
-
-const NAV_LINKS = [
-  { href: "/shop", label: "Shop All" },
-  { href: "/shop?category=sofas-sectionals", label: "Sofas" },
-  { href: "/shop?category=bedroom", label: "Bedroom" },
-  { href: "/shop?category=storage", label: "Storage" },
-  { href: "/about", label: "About" },
-];
+import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { messages } from "@/lib/i18n/messages";
 
 export default function Header() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const count = useCartCount();
+  const locale = useLocale();
+  const t = messages[locale].nav;
+
+  const NAV_LINKS = [
+    { href: "/shop", label: t.shopAll },
+    { href: "/shop?category=sofas-sectionals", label: t.sofas },
+    { href: "/shop?category=bedroom", label: t.bedroom },
+    { href: "/shop?category=storage", label: t.storage },
+    { href: "/about", label: t.about },
+  ];
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -52,10 +57,11 @@ export default function Header() {
         </nav>
 
         <div className="flex items-center gap-1.5">
+          <LanguageSwitcher className="hidden sm:inline-flex" />
           <Link
             href="/cart"
             className="relative flex h-10 w-10 items-center justify-center rounded-full text-ink-soft transition-colors hover:bg-sand hover:text-ink"
-            aria-label="Cart"
+            aria-label={t.cart}
           >
             <ShoppingBag className="h-[19px] w-[19px]" strokeWidth={1.7} />
             {count > 0 && (
@@ -68,7 +74,7 @@ export default function Header() {
             type="button"
             className="flex h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-sand md:hidden"
             onClick={() => setOpen((v) => !v)}
-            aria-label={open ? "Close menu" : "Open menu"}
+            aria-label={open ? t.closeMenu : t.openMenu}
             aria-expanded={open}
           >
             {open ? <X className="h-5 w-5" strokeWidth={1.6} /> : <Menu className="h-5 w-5" strokeWidth={1.6} />}
@@ -96,6 +102,9 @@ export default function Header() {
                   {link.label}
                 </Link>
               ))}
+              <div className="py-3.5">
+                <LanguageSwitcher />
+              </div>
             </nav>
           </motion.div>
         )}

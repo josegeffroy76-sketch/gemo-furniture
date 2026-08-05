@@ -7,6 +7,9 @@ import StorySection from "@/components/StorySection";
 import { getAllProducts, getBestsellers, getNewArrivals, getProductsByCategory } from "@/lib/products";
 import { getSiteSettings } from "@/lib/site-settings";
 import { getCategories } from "@/lib/categories";
+import { getLocale } from "@/lib/i18n/get-locale";
+import { localizeCategories } from "@/lib/i18n/category-translations";
+import { messages } from "@/lib/i18n/messages";
 
 // Temporary: hotlinked from Higgsfield generations used to preview this
 // design. Replace with permanently-hosted copies (e.g. uploaded to
@@ -21,7 +24,9 @@ const STORY_IMAGE_URL =
 const HERO_VIDEO_URL = "/videos/hero.mp4";
 
 export default async function HomePage() {
-  const categoryList = await getCategories();
+  const [rawCategoryList, locale] = await Promise.all([getCategories(), getLocale()]);
+  const categoryList = localizeCategories(rawCategoryList, locale);
+  const t = messages[locale];
   const [allProducts, bestsellers, newArrivals, settings, categoryProductLists] = await Promise.all([
     getAllProducts(),
     getBestsellers(4),
@@ -44,11 +49,11 @@ export default async function HomePage() {
   // The free-shipping item mirrors the actual /admin/settings toggle, so it
   // never advertises a promo that isn't currently live.
   const marqueeItems = [
-    "Prices below traditional retail",
-    "Fast shipping across the USA",
-    "30-day returns",
-    "Quality checked before it ships",
-    ...(settings.freeCheapestShipping ? ["Free shipping on our lowest-cost option"] : []),
+    t.marquee.belowRetail,
+    t.marquee.fastShipping,
+    t.marquee.returns30,
+    t.marquee.qualityChecked,
+    ...(settings.freeCheapestShipping ? [t.marquee.freeShippingCheapest] : []),
   ];
 
   return (
@@ -63,21 +68,21 @@ export default async function HomePage() {
             <div className="flex items-end justify-between gap-6">
               <div className="max-w-xl">
                 <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-500">
-                  Customer favorites
+                  {t.featured.eyebrow}
                 </span>
                 <h2
                   id="featured-heading"
                   className="mt-3 font-display text-[2rem] leading-tight tracking-[-0.015em] text-ink sm:text-[2.6rem]"
                   style={{ fontWeight: 400 }}
                 >
-                  The pieces our customers keep coming back for
+                  {t.featured.heading}
                 </h2>
               </div>
               <Link
                 href="/shop"
                 className="hidden text-sm font-semibold text-brand-600 hover:text-brand-700 sm:inline-flex"
               >
-                View all →
+                {t.featured.viewAll}
               </Link>
             </div>
             <div className="mt-12 grid grid-cols-2 gap-5 md:grid-cols-4">

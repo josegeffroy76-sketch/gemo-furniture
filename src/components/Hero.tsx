@@ -5,6 +5,9 @@ import { ArrowRight, Star, Truck } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Product } from "@/lib/types";
 import { formatPrice } from "@/lib/format";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { messages } from "@/lib/i18n/messages";
+import { localizeProduct } from "@/lib/i18n/product-translations";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 18 },
@@ -22,6 +25,10 @@ export default function Hero({
   videoUrl?: string;
   featuredProduct?: Product;
 }) {
+  const locale = useLocale();
+  const t = messages[locale].hero;
+  const localizedFeatured = featuredProduct ? localizeProduct(featuredProduct, locale) : undefined;
+
   return (
     <section className="relative w-full overflow-hidden bg-cream" aria-labelledby="hero-heading">
       <div className="container-gemo grid items-center gap-12 pb-16 pt-10 lg:grid-cols-[1fr_1.05fr] lg:gap-16 lg:pb-24 lg:pt-14">
@@ -36,7 +43,7 @@ export default function Hero({
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
             className="inline-flex items-center gap-2 rounded-full border border-line bg-sand/60 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-500"
           >
-            Furnish your home for less
+            {t.badge}
           </motion.span>
 
           <motion.h1
@@ -46,8 +53,8 @@ export default function Hero({
             className="mt-6 text-balance font-display text-[2.5rem] leading-[1.08] tracking-[-0.02em] text-ink sm:text-6xl lg:text-[3.9rem]"
             style={{ fontWeight: 400 }}
           >
-            Beautiful, space-saving furniture
-            <span className="italic text-brand-500"> without the retail price tag.</span>
+            {t.headingLine1}
+            <span className="italic text-brand-500"> {t.headingLine2}</span>
           </motion.h1>
 
           <motion.p
@@ -55,10 +62,7 @@ export default function Hero({
             transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
             className="mt-6 max-w-lg text-[17px] leading-relaxed text-ink-soft"
           >
-            Whether you&apos;re furnishing your first apartment, moving into a small space,
-            starting college, or beginning a new chapter as newlyweds, GEMO Furniture helps
-            you build a comfortable, stylish home on a budget — with fast shipping across
-            the United States.
+            {t.subtitle}
           </motion.p>
 
           <motion.div
@@ -70,7 +74,7 @@ export default function Hero({
               href="/shop"
               className="group inline-flex items-center gap-2.5 rounded-full bg-brand-500 px-7 py-3.5 text-sm font-semibold text-cream transition-colors hover:bg-brand-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
             >
-              Shop all furniture
+              {t.ctaShop}
               <ArrowRight
                 size={17}
                 strokeWidth={2}
@@ -81,7 +85,7 @@ export default function Hero({
               href="/about"
               className="inline-flex items-center rounded-full border border-ink/15 px-7 py-3.5 text-sm font-semibold text-ink transition-colors hover:border-ink/40 hover:bg-sand/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
             >
-              Our story
+              {t.ctaStory}
             </Link>
           </motion.div>
 
@@ -97,12 +101,12 @@ export default function Hero({
                 ))}
               </span>
               <span className="text-sm text-ink-soft">
-                <strong className="font-semibold text-ink">4.8</strong> average rating
+                <strong className="font-semibold text-ink">4.8</strong> {t.avgRating}
               </span>
             </div>
             <div className="flex items-center gap-2 text-sm text-ink-soft">
               <Truck size={16} strokeWidth={1.7} className="text-brand-500" />
-              Fast nationwide shipping
+              {t.fastShippingNationwide}
             </div>
           </motion.div>
         </motion.div>
@@ -151,7 +155,7 @@ export default function Hero({
               transition={{ duration: 0.6, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
               className="absolute -bottom-5 left-4 rounded-2xl border border-line bg-cream p-4 shadow-[0_18px_40px_-24px_rgba(34,31,28,0.5)] sm:left-6"
             >
-              <p className="font-display text-sm text-ink">{featuredProduct.name}</p>
+              <p className="font-display text-sm text-ink">{localizedFeatured?.name}</p>
               <p className="mt-1 flex items-baseline gap-2 text-sm">
                 <span className="font-semibold text-brand-500">
                   {formatPrice(featuredProduct.price)}

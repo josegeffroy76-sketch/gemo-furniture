@@ -2,26 +2,19 @@
 
 import { Ruler, Wallet, ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
-
-const pillars = [
-  {
-    icon: Ruler,
-    title: "Designed for small spaces",
-    body: "Every piece is chosen and sized for real apartments, dorms, and first homes — not showrooms.",
-  },
-  {
-    icon: Wallet,
-    title: "Priced without the retail markup",
-    body: "We keep our catalog tight and pass the savings on, so quality furniture doesn't come with a retail price tag.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Quality checked before it ships",
-    body: "Every order is checked before it leaves the warehouse, and backed by 30-day returns if something isn't right.",
-  },
-];
+import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { messages } from "@/lib/i18n/messages";
 
 export default function StorySection({ imageUrl }: { imageUrl?: string }) {
+  const locale = useLocale();
+  const t = messages[locale].story;
+
+  const pillars = [
+    { icon: Ruler, title: t.pillar1Title, body: t.pillar1Body },
+    { icon: Wallet, title: t.pillar2Title, body: t.pillar2Body },
+    { icon: ShieldCheck, title: t.pillar3Title, body: t.pillar3Body },
+  ];
+
   return (
     <section id="story" aria-labelledby="story-heading" className="w-full bg-cream py-16 lg:py-24">
       <div className="container-gemo grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
@@ -50,20 +43,16 @@ export default function StorySection({ imageUrl }: { imageUrl?: string }) {
 
         <div>
           <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-500">
-            Our story
+            {t.eyebrow}
           </span>
           <h2
             id="story-heading"
             className="mt-3 text-balance font-display text-[2rem] leading-tight tracking-[-0.015em] text-ink sm:text-[2.6rem]"
             style={{ fontWeight: 400 }}
           >
-            Good furniture shouldn&apos;t be a luxury
+            {t.heading}
           </h2>
-          <p className="mt-5 max-w-lg text-[17px] leading-relaxed text-ink-soft">
-            GEMO started with a simple frustration: furniture that fits a small budget
-            usually looks and feels like it. We keep our catalog tight and focused on
-            what actually fits small spaces, so you don&apos;t have to compromise.
-          </p>
+          <p className="mt-5 max-w-lg text-[17px] leading-relaxed text-ink-soft">{t.body}</p>
 
           <ul className="mt-10 space-y-7">
             {pillars.map((pillar, index) => (
