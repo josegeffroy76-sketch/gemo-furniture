@@ -7,6 +7,8 @@ import { useCartDetails } from "@/lib/cart-store";
 import { formatPrice } from "@/lib/format";
 import type { ShippingRateOption } from "@/lib/shippo";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { messages } from "@/lib/i18n/messages";
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
 
@@ -37,6 +39,8 @@ export default function ShippingPage() {
   const [error, setError] = useState<string | null>(null);
   const [taxEstimate, setTaxEstimate] = useState<number | null>(null);
   const [loadingTax, setLoadingTax] = useState(false);
+  const locale = useLocale();
+  const t = messages[locale].checkoutShipping;
 
   // Live tax preview so customers see the real sales tax breakdown here,
   // instead of only finding out on Stripe's own payment page. Re-runs
@@ -81,9 +85,9 @@ export default function ShippingPage() {
   if (items.length === 0) {
     return (
       <div className="container-gemo py-24 text-center">
-        <p className="text-sm text-ink-soft">Your cart is empty.</p>
+        <p className="text-sm text-ink-soft">{t.emptyCart}</p>
         <Link href="/shop" className="mt-4 inline-block text-sm font-semibold text-brand-600">
-          Shop All Furniture
+          {t.shopAllFurniture}
         </Link>
       </div>
     );
@@ -106,11 +110,11 @@ export default function ShippingPage() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Couldn't fetch shipping rates.");
+      if (!res.ok) throw new Error(data.error ?? t.couldntFetchRates);
       setRates(data.rates);
       setSelectedRateId(data.rates[0]?.id ?? null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+      setError(err instanceof Error ? err.message : t.somethingWrong);
     } finally {
       setLoadingRates(false);
     }
@@ -132,10 +136,10 @@ export default function ShippingPage() {
         }),
       });
       const data = await res.json();
-      if (!res.ok || !data.url) throw new Error(data.error ?? "Couldn't start checkout.");
+      if (!res.ok || !data.url) throw new Error(data.error ?? t.couldntStartCheckout);
       window.location.href = data.url;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+      setError(err instanceof Error ? err.message : t.somethingWrong);
       setCheckingOut(false);
     }
   }
@@ -146,23 +150,23 @@ export default function ShippingPage() {
   return (
     <div className="container-gemo py-10">
       <Link href="/cart" className="inline-flex items-center gap-1 text-xs font-medium text-ink-soft hover:text-brand-600">
-        <ChevronLeft className="h-3.5 w-3.5" /> Back to cart
+        <ChevronLeft className="h-3.5 w-3.5" /> {t.backToCart}
       </Link>
-      <h1 className="mt-3 font-display text-3xl text-ink">Shipping</h1>
+      <h1 className="mt-3 font-display text-3xl text-ink">{t.title}</h1>
 
       <div className="mt-8 grid gap-10 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <h2 className="text-sm font-semibold text-ink">Shipping address</h2>
+          <h2 className="text-sm font-semibold text-ink">{t.shippingAddress}</h2>
           <div className="mt-4 grid grid-cols-2 gap-3">
             <input
               className="col-span-2 rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500 sm:col-span-1"
-              placeholder="Full name"
+              placeholder={t.fullName}
               value={address.name}
               onChange={(e) => setAddress({ ...address, name: e.target.value })}
             />
             <input
               className="col-span-2 rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500 sm:col-span-1"
-              placeholder="Email"
+              placeholder={t.email}
               type="email"
               value={address.email}
               onChange={(e) => setAddress({ ...address, email: e.target.value })}
@@ -171,6 +175,7 @@ export default function ShippingPage() {
               <div className="col-span-2">
                 <AddressAutocomplete
                   apiKey={GOOGLE_MAPS_API_KEY}
+                  placeholder={t.addressAutocompletePlaceholder}
                   onSelect={(picked) =>
                     setAddress((prev) => ({
                       ...prev,
@@ -185,7 +190,7 @@ export default function ShippingPage() {
                     typos or addresses without a matching suggestion still work. */}
                 <input
                   className="mt-2 w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
-                  placeholder="Street address (auto-filled above, or type it directly)"
+                  placeholder={t.streetAddressAutoNote}
                   value={address.street1}
                   onChange={(e) => setAddress({ ...address, street1: e.target.value })}
                 />
@@ -193,20 +198,20 @@ export default function ShippingPage() {
             ) : (
               <input
                 className="col-span-2 rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
-                placeholder="Street address"
+                placeholder={t.streetAddress}
                 value={address.street1}
                 onChange={(e) => setAddress({ ...address, street1: e.target.value })}
               />
             )}
             <input
               className="col-span-2 rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
-              placeholder="Apt, suite, etc. (optional)"
+              placeholder={t.aptSuite}
               value={address.street2}
               onChange={(e) => setAddress({ ...address, street2: e.target.value })}
             />
             <input
               className="col-span-2 rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500 sm:col-span-1"
-              placeholder="City"
+              placeholder={t.city}
               value={address.city}
               onChange={(e) => setAddress({ ...address, city: e.target.value })}
             />
@@ -215,7 +220,7 @@ export default function ShippingPage() {
               value={address.state}
               onChange={(e) => setAddress({ ...address, state: e.target.value })}
             >
-              <option value="">State</option>
+              <option value="">{t.statePlaceholder}</option>
               {US_STATES.map((s) => (
                 <option key={s} value={s}>
                   {s}
@@ -224,13 +229,13 @@ export default function ShippingPage() {
             </select>
             <input
               className="rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500"
-              placeholder="ZIP code"
+              placeholder={t.zip}
               value={address.zip}
               onChange={(e) => setAddress({ ...address, zip: e.target.value })}
             />
             <input
               className="col-span-2 rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand-500 sm:col-span-1"
-              placeholder="Phone (optional)"
+              placeholder={t.phone}
               value={address.phone}
               onChange={(e) => setAddress({ ...address, phone: e.target.value })}
             />
@@ -243,12 +248,12 @@ export default function ShippingPage() {
             className="mt-5 inline-flex items-center gap-2 rounded-full border border-ink/15 px-5 py-2.5 text-sm font-semibold text-ink transition-colors hover:bg-sand disabled:opacity-50"
           >
             {loadingRates ? <Loader2 className="h-4 w-4 animate-spin" /> : <Truck className="h-4 w-4" />}
-            {loadingRates ? "Getting rates…" : "Get Shipping Rates"}
+            {loadingRates ? t.gettingRates : t.getShippingRates}
           </button>
 
           {rates && rates.length > 0 && (
             <div className="mt-6 space-y-2.5">
-              <h2 className="text-sm font-semibold text-ink">Choose a shipping method</h2>
+              <h2 className="text-sm font-semibold text-ink">{t.chooseShippingMethod}</h2>
               {rates.map((rate) => (
                 <label
                   key={rate.id}
@@ -275,7 +280,7 @@ export default function ShippingPage() {
                         <span className="text-xs font-normal text-ink-soft/60 line-through">
                           {formatPrice(rate.originalAmount)}
                         </span>
-                        <span className="text-brand-600">FREE</span>
+                        <span className="text-brand-600">{t.free}</span>
                       </span>
                     ) : (
                       formatPrice(rate.amount)
@@ -290,14 +295,14 @@ export default function ShippingPage() {
         </div>
 
         <div className="h-fit rounded-2xl border border-line bg-white/60 p-6">
-          <h2 className="text-sm font-semibold text-ink">Order Summary</h2>
+          <h2 className="text-sm font-semibold text-ink">{t.orderSummary}</h2>
           <div className="mt-4 space-y-2 text-sm">
             <div className="flex justify-between text-ink-soft">
-              <span>Subtotal</span>
+              <span>{t.subtotal}</span>
               <span className="text-ink">{formatPrice(subtotal)}</span>
             </div>
             <div className="flex justify-between text-ink-soft">
-              <span>Shipping</span>
+              <span>{t.shipping}</span>
               <span className="text-ink">
                 {!selectedRate ? (
                   "—"
@@ -306,7 +311,7 @@ export default function ShippingPage() {
                     <span className="text-xs text-ink-soft/60 line-through">
                       {formatPrice(selectedRate.originalAmount)}
                     </span>
-                    <span className="text-brand-600">FREE</span>
+                    <span className="text-brand-600">{t.free}</span>
                   </span>
                 ) : (
                   formatPrice(selectedRate.amount)
@@ -314,7 +319,7 @@ export default function ShippingPage() {
               </span>
             </div>
             <div className="flex justify-between text-ink-soft">
-              <span>Estimated tax</span>
+              <span>{t.estimatedTax}</span>
               <span className="text-ink">
                 {!selectedRate
                   ? "—"
@@ -326,14 +331,12 @@ export default function ShippingPage() {
               </span>
             </div>
             <div className="flex justify-between border-t border-line pt-2 font-semibold text-ink">
-              <span>Total</span>
+              <span>{t.total}</span>
               <span>{formatPrice(total)}</span>
             </div>
           </div>
           {selectedRate && taxEstimate !== null && (
-            <p className="mt-2 text-[11px] leading-snug text-ink-soft/70">
-              Estimated for your address — the final amount is confirmed on the payment page.
-            </p>
+            <p className="mt-2 text-[11px] leading-snug text-ink-soft/70">{t.estimatedNote}</p>
           )}
 
           <button
@@ -343,7 +346,7 @@ export default function ShippingPage() {
             className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-brand-500 px-6 py-3 text-sm font-semibold text-cream transition-colors hover:bg-brand-600 disabled:opacity-50"
           >
             {checkingOut ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-            {checkingOut ? "Redirecting to payment…" : "Continue to Payment"}
+            {checkingOut ? t.redirecting : t.continueToPayment}
           </button>
         </div>
       </div>
