@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { ShoppingBag, Check } from "lucide-react";
 import { useCartStore } from "@/lib/cart-store";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { messages } from "@/lib/i18n/messages";
 
 export default function AddToCartButton({
   productId,
@@ -15,6 +17,8 @@ export default function AddToCartButton({
 }) {
   const addItem = useCartStore((s) => s.addItem);
   const [justAdded, setJustAdded] = useState(false);
+  const locale = useLocale();
+  const t = messages[locale].product;
 
   return (
     <button
@@ -28,11 +32,11 @@ export default function AddToCartButton({
     >
       {justAdded ? (
         <>
-          <Check className="h-4 w-4" /> Added to cart
+          <Check className="h-4 w-4" /> {t.addedToCart}
         </>
       ) : (
         <>
-          <ShoppingBag className="h-4 w-4" /> Add to Cart
+          <ShoppingBag className="h-4 w-4" /> {t.addToCart}
         </>
       )}
     </button>

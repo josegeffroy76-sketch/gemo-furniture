@@ -4,6 +4,9 @@ import ProductCard from "@/components/ProductCard";
 import { getAllProducts } from "@/lib/products";
 import { getSiteSettings } from "@/lib/site-settings";
 import { getCategories } from "@/lib/categories";
+import { getLocale } from "@/lib/i18n/get-locale";
+import { localizeCategories } from "@/lib/i18n/category-translations";
+import { messages } from "@/lib/i18n/messages";
 
 export const metadata: Metadata = {
   title: "Shop All Furniture",
@@ -17,11 +20,14 @@ export default async function ShopPage({
   searchParams: Promise<{ category?: string }>;
 }) {
   const { category } = await searchParams;
-  const [allProducts, settings, CATEGORIES] = await Promise.all([
+  const [allProducts, settings, rawCategories, locale] = await Promise.all([
     getAllProducts(),
     getSiteSettings(),
     getCategories(),
+    getLocale(),
   ]);
+  const t = messages[locale].shop;
+  const CATEGORIES = localizeCategories(rawCategories, locale);
   const activeCategory = CATEGORIES.some((c) => c.slug === category) ? category : undefined;
   const products = allProducts.filter((p) => (activeCategory ? p.category === activeCategory : true));
 
@@ -29,10 +35,10 @@ export default async function ShopPage({
     <div className="container-gemo py-12">
       <div className="flex flex-col gap-1.5">
         <h1 className="font-display text-3xl text-ink">
-          {activeCategory ? CATEGORIES.find((c) => c.slug === activeCategory)?.label : "Shop All Furniture"}
+          {activeCategory ? CATEGORIES.find((c) => c.slug === activeCategory)?.label : t.titleAll}
         </h1>
         <p className="text-sm text-ink-soft">
-          {products.length} {products.length === 1 ? "product" : "products"}
+          {products.length} {products.length === 1 ? t.product : t.products}
         </p>
       </div>
 
@@ -45,7 +51,7 @@ export default async function ShopPage({
               : "border-line text-ink-soft hover:bg-sand"
           }`}
         >
-          All
+          {t.all}
         </Link>
         {CATEGORIES.map((cat) => (
           <Link
@@ -73,9 +79,7 @@ export default async function ShopPage({
           ))}
         </div>
       ) : (
-        <p className="mt-16 text-center text-sm text-ink-soft">
-          No products in this category yet — check back soon.
-        </p>
+        <p className="mt-16 text-center text-sm text-ink-soft">{t.emptyState}</p>
       )}
     </div>
   );

@@ -1,8 +1,13 @@
+"use client";
+
 import Link from "next/link";
 import { Truck } from "lucide-react";
 import type { Product } from "@/lib/types";
 import { formatPrice, percentOff } from "@/lib/format";
 import ProductPhoto from "./ProductPhoto";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { messages } from "@/lib/i18n/messages";
+import { localizeProduct } from "@/lib/i18n/product-translations";
 
 export default function ProductCard({
   product,
@@ -12,6 +17,9 @@ export default function ProductCard({
   /** Mirrors the admin "Free shipping on cheapest option" toggle (see /admin/settings). */
   freeShipping?: boolean;
 }) {
+  const locale = useLocale();
+  const t = messages[locale].productCard;
+  const localized = localizeProduct(product, locale);
   const off = percentOff(product.price, product.compareAtPrice);
 
   return (
@@ -29,17 +37,17 @@ export default function ProductCard({
           <div className="absolute left-3 top-3 flex flex-col gap-1.5">
             {product.bestseller && (
               <span className="rounded-full bg-ink px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-cream">
-                Bestseller
+                {t.bestseller}
               </span>
             )}
             {product.newArrival && (
               <span className="rounded-full bg-brand-600 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-cream">
-                New
+                {t.newLabel}
               </span>
             )}
             {off && (
               <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-brand-700 shadow-sm">
-                {off}% below retail
+                {t.belowRetail.replace("{percent}", String(off))}
               </span>
             )}
           </div>
@@ -48,10 +56,10 @@ export default function ProductCard({
 
       <div className="flex flex-1 flex-col gap-1.5 p-4">
         <h3 className="font-display text-base leading-snug text-ink" style={{ fontWeight: 400 }}>
-          {product.name}
+          {localized.name}
         </h3>
         <p className="line-clamp-2 text-xs leading-relaxed text-ink-soft">
-          {product.shortDescription}
+          {localized.shortDescription}
         </p>
         <div className="mt-2 flex items-baseline gap-2">
           <span className="text-base font-semibold text-ink">{formatPrice(product.price)}</span>
@@ -63,7 +71,7 @@ export default function ProductCard({
         </div>
         {freeShipping && (
           <span className="mt-0.5 inline-flex w-fit items-center gap-1 text-[11px] font-semibold text-brand-600">
-            <Truck className="h-3 w-3" /> Free shipping
+            <Truck className="h-3 w-3" /> {t.freeShipping}
           </span>
         )}
       </div>

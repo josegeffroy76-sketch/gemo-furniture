@@ -4,6 +4,8 @@ import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CatalogLoader from "@/components/CatalogLoader";
+import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
+import { getLocale } from "@/lib/i18n/get-locale";
 
 // Self-hosted at build time by next/font — no runtime request to Google's
 // servers, so page load doesn't depend on a third-party font host.
@@ -38,18 +40,25 @@ export const metadata: Metadata = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Admin and API routes render this same root layout but don't use the
+  // locale cookie for anything — reading it here is safe and cheap either
+  // way (a JSON cookie lookup, not a network call).
+  const locale = await getLocale();
+
   return (
-    <html lang="en" className={`h-full antialiased ${fraunces.variable} ${inter.variable}`}>
+    <html lang={locale} className={`h-full antialiased ${fraunces.variable} ${inter.variable}`}>
       <body className="min-h-full flex flex-col bg-cream text-ink">
-        <CatalogLoader />
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
+        <LocaleProvider locale={locale}>
+          <CatalogLoader />
+          <Header />
+          <main className="flex-1">{children}</main>
+          <Footer />
+        </LocaleProvider>
       </body>
     </html>
   );

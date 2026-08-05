@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BadgeDollarSign, Home as HomeIcon, GraduationCap, Sparkles, Truck, Award } from "lucide-react";
+import { getLocale } from "@/lib/i18n/get-locale";
+import { messages } from "@/lib/i18n/messages";
 
 export const metadata: Metadata = {
   title: "About Us",
@@ -8,49 +10,37 @@ export const metadata: Metadata = {
     "Learn why GEMO Furniture offers high-quality, space-saving furniture at prices below traditional retail stores.",
 };
 
-const REASONS = [
-  { icon: BadgeDollarSign, text: "Prices below traditional retail stores" },
-  { icon: HomeIcon, text: "Perfect for apartments and small living spaces" },
-  { icon: GraduationCap, text: "Ideal for students, first-time renters, and newly married couples" },
-  { icon: Sparkles, text: "Modern, functional, and stylish furniture" },
-  { icon: Truck, text: "Fast nationwide shipping across the USA" },
-  { icon: Award, text: "Outstanding value without sacrificing quality" },
-];
+export default async function AboutPage() {
+  const locale = await getLocale();
+  const t = messages[locale].about;
 
-export default function AboutPage() {
+  const REASONS = [
+    { icon: BadgeDollarSign, text: t.reason1 },
+    { icon: HomeIcon, text: t.reason2 },
+    { icon: GraduationCap, text: t.reason3 },
+    { icon: Sparkles, text: t.reason4 },
+    { icon: Truck, text: t.reason5 },
+    { icon: Award, text: t.reason6 },
+  ];
+
   return (
     <div className="container-gemo py-16 md:py-20">
       <div className="mx-auto max-w-2xl text-center">
         <span className="mb-4 inline-flex w-fit items-center rounded-full bg-brand-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-brand-700">
-          Our Story
+          {t.eyebrow}
         </span>
-        <h1 className="font-display text-3xl text-ink md:text-4xl">Welcome to GEMO Furniture</h1>
+        <h1 className="font-display text-3xl text-ink md:text-4xl">{t.heading}</h1>
       </div>
 
       <div className="mx-auto mt-10 max-w-2xl space-y-5 text-base leading-relaxed text-ink-soft">
-        <p>
-          At GEMO Furniture, we believe everyone deserves a beautiful home without
-          paying retail prices.
-        </p>
-        <p>
-          Whether you&apos;re furnishing your first apartment, moving into a small
-          space, starting college, or beginning a new chapter as newlyweds, we&apos;re
-          here to help you create a comfortable and stylish home on a budget.
-        </p>
-        <p>
-          We specialize in high-quality, space-saving furniture at prices below
-          traditional retail stores. Our carefully selected collection is designed for
-          modern living, offering smart solutions for apartments, condos, dorms, and
-          smaller homes without compromising on style or quality.
-        </p>
-        <p>
-          With fast shipping across the United States, shopping for affordable
-          furniture has never been easier.
-        </p>
+        <p>{t.p1}</p>
+        <p>{t.p2}</p>
+        <p>{t.p3}</p>
+        <p>{t.p4}</p>
       </div>
 
       <div className="mx-auto mt-14 max-w-3xl">
-        <h2 className="text-center font-display text-2xl text-ink">Why Choose GEMO Furniture?</h2>
+        <h2 className="text-center font-display text-2xl text-ink">{t.whyHeading}</h2>
         <div className="mt-8 grid gap-x-8 gap-y-6 sm:grid-cols-2">
           {REASONS.map(({ icon: Icon, text }) => (
             <div key={text} className="flex items-start gap-3">
@@ -64,14 +54,12 @@ export default function AboutPage() {
       </div>
 
       <div className="mx-auto mt-16 max-w-xl rounded-2xl bg-ink px-8 py-10 text-center">
-        <p className="font-display text-xl italic text-cream md:text-2xl">
-          Furnish your home for less. Live better with GEMO Furniture.
-        </p>
+        <p className="font-display text-xl italic text-cream md:text-2xl">{t.ctaQuote}</p>
         <Link
           href="/shop"
           className="mt-6 inline-flex items-center gap-2 rounded-full bg-brand-500 px-6 py-3 text-sm font-semibold text-cream transition-colors hover:bg-brand-600"
         >
-          Shop All Furniture
+          {t.ctaShop}
         </Link>
       </div>
     </div>
