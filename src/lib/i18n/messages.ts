@@ -149,6 +149,38 @@ export interface Messages {
     ctaQuote: string;
     ctaShop: string;
   };
+  checkoutShipping: {
+    emptyCart: string;
+    shopAllFurniture: string;
+    backToCart: string;
+    title: string;
+    shippingAddress: string;
+    fullName: string;
+    email: string;
+    streetAddress: string;
+    streetAddressAutoNote: string;
+    addressAutocompletePlaceholder: string;
+    aptSuite: string;
+    city: string;
+    statePlaceholder: string;
+    zip: string;
+    phone: string;
+    gettingRates: string;
+    getShippingRates: string;
+    chooseShippingMethod: string;
+    free: string;
+    couldntFetchRates: string;
+    couldntStartCheckout: string;
+    somethingWrong: string;
+    orderSummary: string;
+    subtotal: string;
+    shipping: string;
+    estimatedTax: string;
+    total: string;
+    estimatedNote: string;
+    redirecting: string;
+    continueToPayment: string;
+  };
 }
 
 export const messages: Record<Locale, Messages> = {
@@ -307,6 +339,38 @@ export const messages: Record<Locale, Messages> = {
       ctaQuote: "Furnish your home for less. Live better with GEMO Furniture.",
       ctaShop: "Shop All Furniture",
     },
+    checkoutShipping: {
+      emptyCart: "Your cart is empty.",
+      shopAllFurniture: "Shop All Furniture",
+      backToCart: "Back to cart",
+      title: "Shipping",
+      shippingAddress: "Shipping address",
+      fullName: "Full name",
+      email: "Email",
+      streetAddress: "Street address",
+      streetAddressAutoNote: "Street address (auto-filled above, or type it directly)",
+      addressAutocompletePlaceholder: "Start typing your street address…",
+      aptSuite: "Apt, suite, etc. (optional)",
+      city: "City",
+      statePlaceholder: "State",
+      zip: "ZIP code",
+      phone: "Phone (optional)",
+      gettingRates: "Getting rates…",
+      getShippingRates: "Get Shipping Rates",
+      chooseShippingMethod: "Choose a shipping method",
+      free: "FREE",
+      couldntFetchRates: "Couldn't fetch shipping rates.",
+      couldntStartCheckout: "Couldn't start checkout.",
+      somethingWrong: "Something went wrong.",
+      orderSummary: "Order Summary",
+      subtotal: "Subtotal",
+      shipping: "Shipping",
+      estimatedTax: "Estimated tax",
+      total: "Total",
+      estimatedNote: "Estimated for your address — the final amount is confirmed on the payment page.",
+      redirecting: "Redirecting to payment…",
+      continueToPayment: "Continue to Payment",
+    },
   },
   es: {
     nav: {
@@ -462,6 +526,38 @@ export const messages: Record<Locale, Messages> = {
       reason6: "Excelente relación calidad-precio sin sacrificar calidad",
       ctaQuote: "Amuebla tu hogar por menos. Vive mejor con GEMO Furniture.",
       ctaShop: "Ver Todos los Muebles",
+    },
+    checkoutShipping: {
+      emptyCart: "Tu carrito está vacío.",
+      shopAllFurniture: "Ver Todos los Muebles",
+      backToCart: "Volver al carrito",
+      title: "Envío",
+      shippingAddress: "Dirección de envío",
+      fullName: "Nombre completo",
+      email: "Correo electrónico",
+      streetAddress: "Dirección",
+      streetAddressAutoNote: "Dirección (autocompletada arriba, o escríbela directamente)",
+      addressAutocompletePlaceholder: "Empieza a escribir tu dirección…",
+      aptSuite: "Apartamento, suite, etc. (opcional)",
+      city: "Ciudad",
+      statePlaceholder: "Estado",
+      zip: "Código postal",
+      phone: "Teléfono (opcional)",
+      gettingRates: "Obteniendo tarifas…",
+      getShippingRates: "Ver Tarifas de Envío",
+      chooseShippingMethod: "Elige un método de envío",
+      free: "GRATIS",
+      couldntFetchRates: "No se pudieron obtener las tarifas de envío.",
+      couldntStartCheckout: "No se pudo iniciar el pago.",
+      somethingWrong: "Algo salió mal.",
+      orderSummary: "Resumen del Pedido",
+      subtotal: "Subtotal",
+      shipping: "Envío",
+      estimatedTax: "Impuesto estimado",
+      total: "Total",
+      estimatedNote: "Estimado para tu dirección — el monto final se confirma en la página de pago.",
+      redirecting: "Redirigiendo al pago…",
+      continueToPayment: "Continuar al Pago",
     },
   },
 };
